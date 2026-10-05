@@ -71,21 +71,33 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Password and Confirm Password do not match.' });
     }
 
-    const isDev = process.env.NODE_ENV !== 'production';
-    const smtpConfigured = isSmtpConfigured();
-
-    if (!smtpConfigured && !isDev) {
-      return res.status(503).json({
-        error: 'Email service is not configured on the server. Contact your administrator to configure SMTP settings.',
-      });
-    }
-
     const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existingUser) {
       return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
     }
 
     const passwordHash = bcrypt.hashSync(password, 10);
+    const smtpConfigured = isSmtpConfigured();
+
+    // If SMTP is not configured in the environment (e.g. initial Render deployment without SMTP),
+    // automatically activate and create the account so the user is never blocked from using the app.
+    if (!smtpConfigured) {
+      const now = new Date().toISOString();
+      const info = db.prepare(`
+        INSERT INTO users (full_name, email, department, password_hash, role, verified, active, created_at)
+        VALUES (?, ?, ?, ?, 'EMPLOYEE', 1, 1, ?)
+      `).run(fullName, email, department, passwordHash, now);
+
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+
+      return loginSession(req, user, res, () => {
+        return res.json({
+          message: 'Account created successfully! Welcome to the Conference Suite.',
+          user: publicUser(user),
+        });
+      });
+    }
+
     const otp = generateOtp();
     const otpHash = bcrypt.hashSync(otp, 10);
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
@@ -98,28 +110,13 @@ router.post('/signup', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, 0, ?)
     `).run(email, fullName, department, passwordHash, otpHash, expiresAt, now);
 
-    let sent = false;
-    if (smtpConfigured) {
-      try {
-        await sendOtpEmail(email, fullName, otp);
-        sent = true;
-      } catch (mailErr) {
-        console.error('Failed to send OTP email:', mailErr.message);
-        if (!isDev) {
-          db.prepare('DELETE FROM email_verifications WHERE email = ?').run(email);
-          return res.status(502).json({ error: 'Could not send verification email. Please try again later.' });
-        }
-      }
-    }
-
-    if (!sent && isDev) {
-      console.log('====================================================');
-      console.log(`[DEV MODE] Verification OTP for ${fullName} (${email}): ${otp}`);
-      console.log('====================================================');
-      return res.json({
-        message: `Dev Mode: Your verification code is ${otp}`,
-        email,
-        devOtp: otp,
+    try {
+      await sendOtpEmail(email, fullName, otp);
+    } catch (mailErr) {
+      console.error('Failed to send OTP email:', mailErr.message);
+      db.prepare('DELETE FROM email_verifications WHERE email = ?').run(email);
+      return res.status(502).json({
+        error: `Could not send verification email: ${mailErr.message}. Check your SMTP credentials in the Render Dashboard.`,
       });
     }
 
@@ -354,7 +351,7 @@ router.post('/forgot-password', async (req, res) => {
     const smtpConfigured = isSmtpConfigured();
     if (!smtpConfigured) {
       return res.status(503).json({
-        error: 'Email service is not configured yet. Please configure your Gmail SMTP settings in .env to send verification codes to your mail.',
+        error: 'Email service is not configured. Please add your SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) in the Render Dashboard (Environment tab) to send verification codes.',
       });
     }
 
