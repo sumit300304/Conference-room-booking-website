@@ -1,0 +1,274 @@
+const nodemailer = require('nodemailer');
+
+function isSmtpConfigured() {
+  const host = process.env.SMTP_HOST || '';
+  const user = process.env.SMTP_USER || '';
+  const pass = process.env.SMTP_PASS || '';
+  if (!host || !user || !pass) return false;
+  if (host.includes('yourprovider.com') || user.includes('your_smtp_username')) return false;
+  return true;
+}
+
+let transporter = null;
+
+function getTransporter() {
+  if (!isSmtpConfigured()) return null;
+  if (transporter) return transporter;
+
+  const host = (process.env.SMTP_HOST || '').toLowerCase();
+  const pass = String(process.env.SMTP_PASS || '').trim().replace(/\s+/g, '');
+  const user = String(process.env.SMTP_USER || '').trim();
+
+  const isGmail = host.includes('gmail') || user.endsWith('@gmail.com');
+
+  const options = isGmail
+    ? {
+        service: 'gmail',
+        auth: { user, pass },
+      }
+    : {
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+        auth: { user, pass },
+      };
+
+  transporter = nodemailer.createTransport(options);
+  return transporter;
+}
+
+/**
+ * Sends the OTP verification email.
+ */
+async function sendOtpEmail(toEmail, fullName, otp) {
+  const t = getTransporter();
+  if (!t) {
+    const err = new Error('SMTP_NOT_CONFIGURED');
+    err.code = 'SMTP_NOT_CONFIGURED';
+    throw err;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await t.sendMail({
+    from,
+    to: toEmail,
+    subject: 'Algorisys Conference Booking - Email Verification Code',
+    text: `Hello ${fullName},\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes. If you did not request this, please ignore this email.\n\n- Algorisys Conference Hall Booking System`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
+        <h2 style="color:#0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Algorisys Conference Hall Booking</h2>
+        <p>Hello ${fullName},</p>
+        <p>Your email verification code is:</p>
+        <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #0f172a; background: #f1f5f9; padding: 12px; text-align: center; border-radius: 8px;">${otp}</p>
+        <p>This code expires in <strong>10 minutes</strong>.</p>
+        <p style="color: #64748b; font-size: 12px;">If you did not request this, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Sends confirmation email when a conference room is successfully booked.
+ * Dispatches confirmation to the person who booked the hall, AND sends
+ * meeting invitations to all attendees.
+ */
+async function sendBookingConfirmationEmail({ 
+  toEmail, 
+  fullName, 
+  bookingCode, 
+  hallName, 
+  date, 
+  startTime, 
+  endTime, 
+  purpose, 
+  attendees, 
+  participants,
+  attendeeList = [] 
+}) {
+  const t = getTransporter();
+  const participantText = participants ? ` (${participants})` : '';
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@algorisys.com';
+
+  // 1. Email to the person who booked the hall
+  if (!t) {
+    console.log(`====================================================`);
+    console.log(`[DEV NOTIFICATION - BOOKER CONFIRMATION]`);
+    console.log(`To: ${fullName} <${toEmail}>`);
+    console.log(`Booking ID: ${bookingCode} | Hall: ${hallName} | Date: ${date} | Time: ${startTime} – ${endTime} IST`);
+    console.log(`Attendees: ${attendees}${participantText} | Purpose: ${purpose}`);
+    console.log(`====================================================`);
+  } else {
+    try {
+      await t.sendMail({
+        from,
+        to: toEmail,
+        subject: `Booking Confirmed: ${hallName} on ${date} (${startTime} – ${endTime} IST)`,
+        text: `Hello ${fullName},\n\nYour conference room booking has been confirmed.\n\nBooking ID: ${bookingCode}\nHall: ${hallName}\nDate: ${date}\nTime: ${startTime} – ${endTime} IST\nMembers: ${attendees}${participantText}\nPurpose: ${purpose}\n\nThank you,\nAlgorisys Conference Hall Booking System`,
+        html: `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; background: #ffffff;">
+            <div style="background-color: #090e1a; color: #ffffff; padding: 24px; border-bottom: 2px solid #2563eb;">
+              <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #60a5fa; font-weight: bold;">Algorisys Conference Suite</span>
+              <h2 style="margin: 6px 0 0; font-size: 20px; font-weight: 700;">Conference Room Reserved</h2>
+            </div>
+            <div style="padding: 24px;">
+              <p style="margin-top: 0; font-size: 15px;">Hello <strong>${fullName}</strong>,</p>
+              <p style="font-size: 14px; color: #334155; line-height: 1.5;">Your conference room reservation has been confirmed in the system. Details are provided below:</p>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 20px 0;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                  <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Booking Pass ID:</td><td style="padding: 8px 0; font-weight: 700; color: #2563eb; font-family: monospace; font-size: 15px;">${bookingCode}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Conference Hall:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${hallName}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Date:</td><td style="padding: 8px 0; font-weight: 600; color: #0f172a;">${date}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Time Window:</td><td style="padding: 8px 0; font-weight: 700; color: #0284c7;">${startTime} – ${endTime} IST</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Attendees:</td><td style="padding: 8px 0; color: #334155;"><strong>${attendees}</strong> member(s)${participantText}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Agenda / Purpose:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 500;">${purpose}</td></tr>
+                </table>
+              </div>
+              <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">If your meeting concludes early, you can release the room from "My Bookings" to free it up for colleagues.</p>
+            </div>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error('Failed to send booker confirmation email:', err.message);
+    }
+  }
+
+  // 2. Email to each attendee / participant
+  if (Array.isArray(attendeeList) && attendeeList.length > 0) {
+    for (const att of attendeeList) {
+      const attEmail = (att.email || '').trim().toLowerCase();
+      const attName = att.name || 'Colleague';
+      if (!attEmail || attEmail === (toEmail || '').toLowerCase()) continue;
+
+      if (!t) {
+        console.log(`----------------------------------------------------`);
+        console.log(`[DEV NOTIFICATION - ATTENDEE INVITATION]`);
+        console.log(`To: ${attName} <${attEmail}>`);
+        console.log(`Subject: Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST)`);
+        console.log(`Organized by: ${fullName} | Purpose: ${purpose}`);
+        console.log(`----------------------------------------------------`);
+      } else {
+        try {
+          await t.sendMail({
+            from,
+            to: attEmail,
+            subject: `Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST)`,
+            text: `Hello ${attName},\n\nYou have been invited to a meeting in ${hallName} scheduled by ${fullName}.\n\nBooking ID: ${bookingCode}\nDate: ${date}\nTime: ${startTime} – ${endTime} IST\nLocation: ${hallName}\nAttendees: ${participants || attendees}\nMeeting Purpose: ${purpose}\n\nAlgorisys Conference Suite`,
+            html: `
+              <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; background: #ffffff;">
+                <div style="background-color: #090e1a; color: #ffffff; padding: 24px; border-bottom: 2px solid #10b981;">
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #34d399; font-weight: bold;">Meeting Invitation</span>
+                  <h2 style="margin: 6px 0 0; font-size: 20px; font-weight: 700;">You are invited to ${hallName}</h2>
+                </div>
+                <div style="padding: 24px;">
+                  <p style="margin-top: 0; font-size: 15px;">Hello <strong>${attName}</strong>,</p>
+                  <p style="font-size: 14px; color: #334155; line-height: 1.5;"><strong>${fullName}</strong> has scheduled a conference session and included you as an attendee:</p>
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                      <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Location:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${hallName}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Date:</td><td style="padding: 8px 0; font-weight: 600; color: #0f172a;">${date}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Time Slot:</td><td style="padding: 8px 0; font-weight: 700; color: #059669;">${startTime} – ${endTime} IST</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Organizer:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${fullName} (${toEmail})</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Purpose / Agenda:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 500;">${purpose}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">All Attendees:</td><td style="padding: 8px 0; color: #334155; font-size: 13px;">${participants || attendees}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Pass Ref:</td><td style="padding: 8px 0; color: #64748b; font-family: monospace; font-size: 12px;">${bookingCode}</td></tr>
+                    </table>
+                  </div>
+                  <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">Please be present at ${hallName} on time. Thank you!</p>
+                </div>
+              </div>
+            `,
+          });
+        } catch (err) {
+          console.error(`Failed to send attendee email to ${attEmail}:`, err.message);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Sends notification when a meeting slot has concluded.
+ */
+async function sendMeetingEndedEmail({ toEmail, fullName, bookingCode, hallName, date, startTime, endTime, purpose }) {
+  const t = getTransporter();
+  if (!t) {
+    console.log(`[DEV NOTIFICATION - MEETING ENDED] To: ${fullName} <${toEmail}>`);
+    console.log(`Your meeting in ${hallName} (${bookingCode}) scheduled on ${date} from ${startTime} to ${endTime} has concluded.`);
+    return;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await t.sendMail({
+    from,
+    to: toEmail,
+    subject: `Meeting Concluded: ${hallName} (${bookingCode})`,
+    text: `Hello ${fullName},\n\nYour meeting in ${hallName} (${bookingCode}) on ${date} from ${startTime} to ${endTime} IST has now ended.\n\nThank you for using the Algorisys Conference Hall Booking System.`,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 20px 24px;">
+          <h2 style="margin: 0; font-size: 18px; color: #0f172a;">Meeting Concluded</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #64748b;">Algorisys Conference Hall Booking</p>
+        </div>
+        <div style="padding: 24px;">
+          <p style="margin-top: 0;">Hello <strong>${fullName}</strong>,</p>
+          <p>Your scheduled conference room time in <strong>${hallName}</strong> has concluded:</p>
+          <ul style="color: #334155; font-size: 14px; line-height: 1.6;">
+            <li><strong>Booking Code:</strong> ${bookingCode}</li>
+            <li><strong>Date:</strong> ${date}</li>
+            <li><strong>Slot:</strong> ${startTime} – ${endTime} IST</li>
+            <li><strong>Purpose:</strong> ${purpose}</li>
+          </ul>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">Thank you for your cooperation in keeping the halls available for colleagues.</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Sends password reset OTP email.
+ */
+async function sendPasswordResetOtpEmail(toEmail, fullName, otp) {
+  const t = getTransporter();
+  if (!t) {
+    console.log(`[DEV NOTIFICATION - PASSWORD RESET OTP] To: ${fullName} <${toEmail}> | Code: ${otp}`);
+    return;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await t.sendMail({
+    from,
+    to: toEmail,
+    subject: 'Algorisys Conference Booking - Password Reset Code',
+    text: `Hello ${fullName},\n\nYour password reset code is: ${otp}\n\nThis code expires in 10 minutes. If you did not request a password reset, please ignore this email or contact your administrator immediately.\n\n- Algorisys Conference Hall Booking System`,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #0f172a; color: #ffffff; padding: 20px 24px;">
+          <h2 style="margin: 0; font-size: 18px;">Password Reset Request</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">Algorisys Conference Hall Booking</p>
+        </div>
+        <div style="padding: 24px;">
+          <p style="margin-top: 0;">Hello <strong>${fullName}</strong>,</p>
+          <p>We received a request to reset your password. Use the verification code below to set a new password:</p>
+          <div style="margin: 20px 0; text-align: center;">
+            <span style="font-size: 30px; font-weight: 700; letter-spacing: 6px; color: #0f172a; background: #f1f5f9; padding: 12px 24px; border-radius: 8px; display: inline-block; font-family: monospace;">${otp}</span>
+          </div>
+          <p style="font-size: 13px; color: #64748b;">This code expires in <strong>10 minutes</strong>. If you did not request this password reset, please ignore this email or notify your system administrator.</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+module.exports = {
+  isSmtpConfigured,
+  sendOtpEmail,
+  sendPasswordResetOtpEmail,
+  sendBookingConfirmationEmail,
+  sendMeetingEndedEmail,
+};
+

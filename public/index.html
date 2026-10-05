@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Algorisys · Executive Conference Suite</title>
+  <meta name="theme-color" content="#090e1a">
+  <meta name="description" content="Internal executive conference hall and boardroom booking system for Algorisys employees.">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Algorisys Conference">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Compiled Tailwind CSS v4 -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body
+  class="text-slate-900 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col relative bg-slate-950">
+
+  <!-- ============================================================ -->
+  <!-- AMBIENT ANIMATED CONFERENCE BACKGROUND (BEFORE & AFTER LOGIN) -->
+  <!-- ============================================================ -->
+  <div id="conference-ambient-bg" class="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-slate-950">
+    <!-- Cinematic Empty Architectural Conference Suite Background with Ken Burns Motion -->
+    <div class="absolute inset-0 bg-cover bg-center animate-bg-ambient opacity-25 filter blur-[0.5px]" style="background-image: url('/images/conference-hero.jpg');"></div>
+    
+    <!-- Subtle Architectural Blueprint Grid Overlay -->
+    <div class="absolute inset-0 conference-blueprint-mesh opacity-35"></div>
+    
+    <!-- Floating Ambient Glowing Light Orbs (Cyan & Emerald Corporate Lighting) -->
+    <div class="ambient-glow-orb-1"></div>
+    <div class="ambient-glow-orb-2"></div>
+    <div class="ambient-glow-orb-3"></div>
+    
+    <!-- Soft Vignette & Radial Atmosphere for Maximum Form Readability -->
+    <div class="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-900/60 to-slate-950/85"></div>
+  </div>
+
+  <!-- Toast Notification (shadcn style) -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============================================================ -->
+  <!-- AUTH SCREEN: EXECUTIVE CONFERENCE PORTAL -->
+  <!-- ============================================================ -->
+  <main id="view-auth"
+    class="min-h-screen flex items-center justify-center p-3 sm:p-6 lg:p-10 relative">
+    
+    <div
+      class="w-full max-w-5xl bg-white/95 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl shadow-slate-950/30 overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10 transition-all">
+
+      <!-- LEFT COLUMN: Executive Conference Showcase (Desktop / Tablet) -->
+      <div
+        class="lg:col-span-5 bg-portal-hero p-6 sm:p-8 lg:p-10 text-white auth-showcase-desktop flex-col justify-between relative overflow-hidden">
+        <div class="relative z-10">
+          
+          <!-- Company & Portal Badge -->
+          <div class="flex items-center gap-3 mb-6">
+            <div
+              class="h-10 w-10 rounded-xl bg-blue-600/90 backdrop-blur-sm border border-blue-400/40 text-white flex items-center justify-center font-bold text-base shadow-lg shadow-blue-500/25">
+              AC
+            </div>
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-300">Algorisys Corporate</span>
+              <h2 class="text-sm font-bold text-white tracking-tight">Conference Suite</h2>
+            </div>
+          </div>
+
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold mb-4">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-300"></i>
+            <span>Executive Meeting Spaces</span>
+          </div>
+
+          <h3 class="text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight mb-3">
+            Reserve Boardrooms with Complete Confidence
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed mb-6 font-normal">
+            Real-time conference hall occupancy, conflict-free scheduling, and instant notifications for Algorisys teams.
+          </p>
+
+          <!-- Featured Room Highlights with Real Photographic Previews & Live Status (Zero Humans) -->
+          <div class="space-y-3.5">
+            <!-- Board Room Preview Card -->
+            <div class="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:border-blue-400/60 transition-all duration-300 flex items-center gap-3.5 group shadow-sm">
+              <div class="h-16 w-24 rounded-xl overflow-hidden shrink-0 relative bg-slate-950 border border-white/25">
+                <img src="/images/board-room.jpg" alt="Executive Board Room" class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <span class="absolute top-1.5 left-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="absolute bottom-1 right-1 text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-black/60 text-white backdrop-blur-xs">10S</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                  <h4 class="text-xs font-bold text-white truncate group-hover:text-blue-200 transition-colors">Executive Board Room</h4>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-200 border border-blue-400/30 shrink-0">10 Seats</span>
+                </div>
+                <p class="text-[11px] text-slate-300 truncate">Dual 4K Video Wall · Polycom VC Array</p>
+                <div class="flex items-center gap-2 mt-1 text-[10px] text-emerald-300 font-semibold">
+                  <span class="inline-flex items-center gap-0.5">
+                    <span class="w-1 bg-emerald-400 rounded-full wave-bar-1 inline-block"></span>
+                    <span class="w-1 bg-emerald-400 rounded-full wave-bar-2 inline-block"></span>
+                    <span class="w-1 bg-emerald-400 rounded-full wave-bar-3 inline-block"></span>
+                    <span class="w-1 bg-emerald-400 rounded-full wave-bar-4 inline-block"></span>
+                  </span>
+                  <span>Smart AV Online</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Small Conference Room Preview Card -->
+            <div class="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:border-emerald-400/60 transition-all duration-300 flex items-center gap-3.5 group shadow-sm">
+              <div class="h-16 w-24 rounded-xl overflow-hidden shrink-0 relative bg-slate-950 border border-white/25">
+                <img src="/images/small-conference-room.jpg" alt="Small Conference Room" class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <span class="absolute top-1.5 left-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="absolute bottom-1 right-1 text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-black/60 text-white backdrop-blur-xs">6S</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                  <h4 class="text-xs font-bold text-white truncate group-hover:text-emerald-200 transition-colors">Small Conference Room</h4>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 shrink-0">6 Seats</span>
+                </div>
+                <p class="text-[11px] text-slate-300 truncate">Interactive Whiteboard · Hybrid Sync</p>
+                <div class="flex items-center gap-1.5 mt-1 text-[10px] text-emerald-300 font-semibold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>Instant Team Sync</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="relative z-10 pt-6 mt-6 border-t border-white/15 flex items-center justify-between text-[11px] text-slate-400">
+          <span class="flex items-center gap-1.5 text-slate-300 font-medium">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-400"></i>
+            Internal Enterprise Portal
+          </span>
+          <span class="text-slate-400 font-mono">IST (UTC+5:30)</span>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Authentication Forms & Animated Room Banner -->
+      <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white">
+        
+        <!-- Live Conference Preview Banner (Visible on all screens right above the login card) -->
+        <div class="mb-5 rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm relative group bg-slate-950">
+          <div class="h-28 sm:h-32 w-full relative overflow-hidden">
+            <img src="/images/conference-hero.jpg" alt="Algorisys Conference Suite" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent"></div>
+            
+            <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-600 text-white backdrop-blur-md shadow-xs border border-blue-400/30 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                Conference Hub
+              </span>
+            </div>
+
+            <div class="absolute top-2.5 right-2.5">
+              <span class="text-[10px] font-bold text-emerald-400 bg-slate-950/80 backdrop-blur-md border border-emerald-500/30 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>2 Halls Ready
+              </span>
+            </div>
+
+            <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
+              <div>
+                <p class="text-xs font-bold text-white drop-shadow-sm">Executive Corporate Spaces</p>
+                <p class="text-[10px] text-slate-300">Board Room (10 Seats) &amp; Small Room (6 Seats)</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-1 bg-emerald-400 rounded-full wave-bar-1 inline-block"></span>
+                <span class="w-1 bg-emerald-400 rounded-full wave-bar-2 inline-block"></span>
+                <span class="w-1 bg-emerald-400 rounded-full wave-bar-3 inline-block"></span>
+                <span class="w-1 bg-emerald-400 rounded-full wave-bar-4 inline-block"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segmented Tabs -->
+        <nav
+          class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 mb-5 sm:mb-6 border border-slate-200/60"
+          role="tablist">
+          <button
+            class="auth-tab active flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg transition-all cursor-pointer"
+            data-tab="login" role="tab">
+            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+            <span>Log in</span>
+          </button>
+          <button
+            class="auth-tab flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg transition-all cursor-pointer"
+            data-tab="register" role="tab">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            <span>Register</span>
+          </button>
+        </nav>
+
+        <!-- LOGIN FORM -->
+        <form id="form-login" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+              for="login-email">Company email</label>
+            <div class="relative">
+              <input type="email" id="login-email" placeholder="firstname.lastname@algorisys.com" required
+                autocomplete="username"
+                class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase"
+                for="login-password">Password</label>
+              <button type="button" id="btn-to-forgot"
+                class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer">
+                Forgot password?
+              </button>
+            </div>
+            <div class="relative">
+              <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••"
+                class="w-full h-11 sm:h-10 px-3.5 pr-10 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+              <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition" data-target="login-password" tabindex="-1" title="Toggle password visibility">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit"
+            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer mt-2">
+            <span>Access Conference Hub</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
+            id="login-error"></p>
+        </form>
+
+        <!-- FORGOT PASSWORD: STEP 1 (REQUEST OTP) -->
+        <form id="form-forgot-request" class="space-y-4 hidden">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900">Reset Password</h3>
+                <p class="text-[10px] sm:text-[11px] text-slate-500">We'll email you a 6-digit verification code</p>
+              </div>
+            </div>
+            <button type="button"
+              class="btn-back-to-login text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer">
+              Back to login
+            </button>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+              for="forgot-email">Company email</label>
+            <input type="email" id="forgot-email" placeholder="firstname.lastname@algorisys.com" required
+              autocomplete="username"
+              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+              <i data-lucide="info" class="w-3 h-3 text-slate-400 shrink-0"></i>
+              Enter the @algorisys.com email used for your account.
+            </p>
+          </div>
+
+          <button type="submit"
+            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer mt-1">
+            <span>Send verification code</span>
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+
+          <div class="text-center pt-1">
+            <button type="button"
+              class="btn-back-to-login text-xs font-semibold text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 cursor-pointer py-1">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Return to Log in</span>
+            </button>
+          </div>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
+            id="forgot-request-error"></p>
+        </form>
+
+        <!-- FORGOT PASSWORD: STEP 2 (ENTER CODE & SET NEW PASSWORD) -->
+        <form id="form-forgot-reset" class="space-y-3.5 hidden">
+          <div class="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-start gap-2.5">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="text-xs font-medium text-blue-900" id="forgot-target-text">Password reset code sent to your
+                company email.</p>
+              <p class="text-[11px] text-blue-700 mt-0.5">Expires in 10 minutes.</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+              for="reset-otp-code">6-digit reset code</label>
+            <input type="text" id="reset-otp-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required
+              placeholder="000000"
+              class="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-center tracking-[0.35em] font-mono font-bold text-lg text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+                for="reset-new-password">New password</label>
+              <div class="relative">
+                <input type="password" id="reset-new-password" minlength="8" required autocomplete="new-password"
+                  placeholder="Min 8 chars"
+                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" data-target="reset-new-password" tabindex="-1" title="Toggle password visibility">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+                for="reset-confirm-password">Confirm</label>
+              <div class="relative">
+                <input type="password" id="reset-confirm-password" minlength="8" required autocomplete="new-password"
+                  placeholder="Re-enter"
+                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" data-target="reset-confirm-password" tabindex="-1" title="Toggle password visibility">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit"
+            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer mt-1">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>Submit &amp; reset password</span>
+          </button>
+
+          <div class="flex items-center justify-between pt-1">
+            <button type="button" id="btn-resend-forgot-otp"
+              class="text-xs font-semibold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1.5 cursor-pointer py-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Resend code</span>
+            </button>
+            <button type="button"
+              class="btn-back-to-login text-xs font-semibold text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 cursor-pointer py-1">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back to login</span>
+            </button>
+          </div>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
+            id="forgot-reset-error"></p>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="form-register" class="space-y-3.5 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="reg-name">Full
+              name</label>
+            <input type="text" id="reg-name" required autocomplete="name" placeholder="John Doe"
+              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="reg-email">Company
+              email</label>
+            <input type="email" id="reg-email" placeholder="firstname.lastname@algorisys.com" required
+              autocomplete="username"
+              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+              <i data-lucide="info" class="w-3 h-3 text-slate-400 shrink-0"></i>
+              Only @algorisys.com email addresses are allowed.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+              for="reg-department">Department</label>
+            <input type="text" id="reg-department" required placeholder="e.g. Accounts, HR, Engineering"
+              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+                for="reg-password">Password</label>
+              <div class="relative">
+                <input type="password" id="reg-password" minlength="8" required autocomplete="new-password"
+                  placeholder="Min 8 chars"
+                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition" data-target="reg-password" tabindex="-1" title="Toggle password visibility">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
+                for="reg-confirm">Confirm</label>
+              <div class="relative">
+                <input type="password" id="reg-confirm" minlength="8" required autocomplete="new-password"
+                  placeholder="Re-enter"
+                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition" data-target="reg-confirm" tabindex="-1" title="Toggle password visibility">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit"
+            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer mt-1">
+            <span>Create account</span>
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+          </button>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
+            id="register-error"></p>
+        </form>
+
+        <!-- OTP VERIFY FORM -->
+        <form id="form-otp" class="space-y-4 hidden">
+          <div class="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-start gap-2.5">
+            <i data-lucide="shield-check" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="text-xs font-medium text-blue-900" id="otp-target-text">Verification code sent to your company
+                email.</p>
+              <p class="text-[11px] text-blue-700 mt-0.5">Expires in 10 minutes.</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+              for="otp-code">6-digit verification code</label>
+            <input type="text" id="otp-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required
+              placeholder="000000"
+              class="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg text-center tracking-[0.35em] font-mono font-bold text-xl text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+
+          <button type="submit"
+            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Verify &amp; create account</span>
+          </button>
+
+          <div class="text-center pt-1">
+            <button type="button" id="btn-resend-otp"
+              class="text-xs font-semibold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1.5 cursor-pointer py-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Resend code</span>
+            </button>
+          </div>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
+            id="otp-error"></p>
+        </form>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- EMPLOYEE DASHBOARD -->
+  <!-- ============================================================ -->
+  <div id="view-employee" class="min-h-screen flex flex-col hidden backdrop-blur-[2px] bg-slate-900/10">
+
+    <!-- Top Navigation Header: Executive Corporate Navy -->
+    <header
+      class="sticky top-0 z-30 executive-header px-3.5 sm:px-8 py-2.5 sm:py-3.5 shadow-md">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div
+            class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-600 border border-blue-400/40 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm shadow-blue-500/25 shrink-0">
+            AC
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-xs sm:text-base font-bold text-white leading-tight truncate">Algorisys Conference Suite</h1>
+            <p id="emp-who"
+              class="text-[11px] sm:text-xs font-medium text-slate-300 truncate max-w-[140px] sm:max-w-xs"></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button id="btn-goto-admin"
+            class="hidden inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 transition cursor-pointer shadow-2xs">
+            <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span class="hidden sm:inline">Admin Console</span>
+            <span class="sm:hidden">Admin</span>
+          </button>
+          <div
+            class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-800/90 text-emerald-400 border border-slate-700/80 shadow-2xs whitespace-nowrap">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="emp-clock">--:--</span>
+          </div>
+          <button id="emp-logout"
+            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer border border-white/10">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Log out</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Sub-navigation tabs (scrollable on mobile) -->
+    <div class="max-w-6xl w-full mx-auto px-3.5 sm:px-8 pt-4 sm:pt-6">
+      <div class="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+        <nav
+          class="tabbar inline-flex items-center gap-1 p-1 bg-white/80 backdrop-blur-md rounded-xl border border-slate-200/80 shadow-xs min-w-max"
+          role="tablist">
+          <button
+            class="tabbar-btn active inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-book">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+            <span>New booking</span>
+          </button>
+          <button
+            class="tabbar-btn inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-schedule">
+            <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
+            <span>Schedule</span>
+          </button>
+          <button
+            class="tabbar-btn inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-mine">
+            <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+            <span>My bookings</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl w-full mx-auto px-3.5 sm:px-8 py-4 sm:py-6 flex-1">
+
+      <!-- Panel: New Booking -->
+      <section id="panel-book" class="panel">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-7">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 mb-5 border-b border-slate-100">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="calendar-plus" class="w-5 h-5 text-blue-600"></i>
+                <span>Reserve Conference Hall</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Check real-time hall availability and book your meeting slot.
+              </p>
+            </div>
+
+            <!-- Date Selection for Booking -->
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <label class="text-xs font-semibold text-slate-700 whitespace-nowrap" for="book-date">Meeting Date <span class="text-rose-500 font-bold">*</span>:</label>
+              <input type="date" id="book-date" required
+                class="h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 shadow-2xs focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer">
+              <button type="button" id="btn-book-today"
+                class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer">Today</button>
+              <span id="booking-selected-date-badge" class="hidden">--</span>
+              <span id="occupancy-date-label" class="hidden">Today</span>
+              <span id="occupancy-refresh-note" class="hidden">IST</span>
+            </div>
+          </div>
+
+            <!-- Step 1: Visual Conference Hall Cards -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-2.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="door-open" class="w-4 h-4 text-blue-600"></i>
+                  <span>Step 1: Choose Conference Hall</span>
+                </label>
+                <span class="text-[11px] text-slate-400 font-medium">Click room to select</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="visual-room-cards">
+                <!-- Board Room Card -->
+                <div id="room-card-1" class="room-select-card p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 bg-white relative shadow-2xs hover:shadow-lg transition-all group overflow-hidden" data-hall-id="1">
+                  <!-- Visual Photographic Room Header -->
+                  <div class="relative h-36 sm:h-40 w-full rounded-xl overflow-hidden mb-3 bg-slate-950 border border-slate-100">
+                    <img src="/images/board-room.jpg" alt="Executive Board Room" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent"></div>
+                    
+                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-600/95 text-white backdrop-blur-md shadow-xs border border-blue-400/30">Executive Suite</span>
+                    </div>
+
+                    <div class="absolute top-2.5 right-2.5">
+                      <span id="room-status-badge-1" class="text-[10px] font-bold text-emerald-700 bg-emerald-50/95 backdrop-blur-md border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-xs">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Free Today
+                      </span>
+                    </div>
+
+                    <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="text-xs font-bold text-slate-100 flex items-center gap-1">
+                          <i data-lucide="users" class="w-3.5 h-3.5 text-blue-400"></i> 10 Seats
+                        </span>
+                      </div>
+                      <span class="room-active-indicator hidden inline-flex items-center text-[10px] font-extrabold text-blue-100 bg-blue-600 px-2.5 py-0.5 rounded-full backdrop-blur-md border border-blue-400/40 shadow-sm animate-pulse">
+                        <i data-lucide="check" class="w-3 h-3 mr-0.5"></i> Selected
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 class="text-sm font-bold text-slate-900 leading-tight">Board Room</h4>
+                      <p class="text-[11px] text-slate-500 font-medium mt-0.5">Executive Suite · Leadership &amp; Board Meetings</p>
+                    </div>
+                    <span class="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform">
+                      <span>Select</span>
+                      <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </span>
+                  </div>
+
+                  <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600">
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="tv" class="w-3 h-3 text-blue-500"></i> 4K Video Wall
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="video" class="w-3 h-3 text-indigo-500"></i> Polycom VC
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="mic" class="w-3 h-3 text-emerald-500"></i> Conference Mic Array
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Small Conference Room Card -->
+                <div id="room-card-2" class="room-select-card p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 bg-white relative shadow-2xs hover:shadow-lg transition-all group overflow-hidden" data-hall-id="2">
+                  <!-- Visual Photographic Room Header -->
+                  <div class="relative h-36 sm:h-40 w-full rounded-xl overflow-hidden mb-3 bg-slate-950 border border-slate-100">
+                    <img src="/images/small-conference-room.jpg" alt="Small Conference Room" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent"></div>
+                    
+                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600/95 text-white backdrop-blur-md shadow-xs border border-emerald-400/30">Team Pod</span>
+                    </div>
+
+                    <div class="absolute top-2.5 right-2.5">
+                      <span id="room-status-badge-2" class="text-[10px] font-bold text-emerald-700 bg-emerald-50/95 backdrop-blur-md border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-xs">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Free Today
+                      </span>
+                    </div>
+
+                    <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="text-xs font-bold text-slate-100 flex items-center gap-1">
+                          <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i> 6 Seats
+                        </span>
+                      </div>
+                      <span class="room-active-indicator hidden inline-flex items-center text-[10px] font-extrabold text-blue-100 bg-blue-600 px-2.5 py-0.5 rounded-full backdrop-blur-md border border-blue-400/40 shadow-sm animate-pulse">
+                        <i data-lucide="check" class="w-3 h-3 mr-0.5"></i> Selected
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 class="text-sm font-bold text-slate-900 leading-tight">Small Conference Room</h4>
+                      <p class="text-[11px] text-slate-500 font-medium mt-0.5">Collaboration Hub · 1-on-1s &amp; Team Syncs</p>
+                    </div>
+                    <span class="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform">
+                      <span>Select</span>
+                      <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </span>
+                  </div>
+
+                  <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600">
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="presentation" class="w-3 h-3 text-emerald-500"></i> Interactive Whiteboard
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="cast" class="w-3 h-3 text-blue-500"></i> Wireless Cast
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 flex items-center gap-1">
+                      <i data-lucide="wifi" class="w-3 h-3 text-cyan-500"></i> Gigabit Wi-Fi
+                    </span>
+                  </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Selected Room Schedule / Occupancy Bar -->
+            <div id="room-occupancy-summary" class="mt-3.5"></div>
+          </div>
+
+            <!-- Step 2: Time Window & Dropdown Sync -->
+            <div class="mb-4">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i>
+                <span>Step 2: Meeting Time Window</span>
+              </label>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 mb-3.5">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1"
+                    for="book-hall">Hall Dropdown <span class="text-rose-500 font-bold">*</span></label>
+                  <select id="book-hall" required
+                    class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                    <option value="">-- Select Conference Hall --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1"
+                    for="book-start">Start Time <span class="text-rose-500 font-bold">*</span></label>
+                  <input type="time" id="book-start" required
+                    class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1"
+                    for="book-end">End Time <span class="text-rose-500 font-bold">*</span></label>
+                  <input type="time" id="book-end" required
+                    class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                </div>
+              </div>
+
+              <!-- Live slot availability helper (auto-evaluates as user selects times) -->
+              <div id="live-slot-warning" class="hidden mb-4 p-3 rounded-xl text-xs font-medium border transition-all">
+              </div>
+            </div>
+
+            <!-- Step 3: Meeting Attendees & Agenda -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+                <span>Step 3: Attendees &amp; Purpose</span>
+              </label>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 mb-4">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1"
+                    for="book-participants">
+                    Participant Names &amp; Attendees <span class="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input type="text" id="book-participants" list="colleagues-list" required placeholder="Names or company emails separated by commas"
+                    class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                  <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+                    <i data-lucide="mail-check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                    <span>Invitations with meeting pass will be emailed to all attendees and your registered mail.</span>
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1"
+                    for="book-attendees">Members Count <span class="text-rose-500 font-bold">*</span></label>
+                  <input type="number" id="book-attendees" min="1" max="100" value="1" required
+                    class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+                  <p class="text-[11px] text-slate-400 mt-1">Syncs automatically from names</p>
+                </div>
+              </div>
+
+              <div class="mb-5">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-700"
+                    for="book-purpose">Meeting Purpose / Agenda <span class="text-rose-500 font-bold">*</span></label>
+                  <span class="text-xs text-slate-400 font-mono"><span id="purpose-count">0</span>/300</span>
+                </div>
+                <textarea id="book-purpose" maxlength="300" rows="3" required
+                  class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs"></textarea>
+              </div>
+
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+                <button id="btn-confirm-booking"
+                  class="w-full sm:w-auto h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-6 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer">
+                  <i data-lucide="check" class="w-4 h-4"></i>
+                  <span>Confirm Reservation &amp; Notify</span>
+                </button>
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                  Automatic email notification sent upon confirmation.
+                </p>
+              </div>
+              <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200 mt-3"
+                id="book-error"></p>
+            </div>
+
+          </div>
+      </section>
+
+      <!-- Panel: Schedule (With interactive Date Picker for Present & Future) -->
+      <section id="panel-schedule" class="panel hidden">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
+
+          <div
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-5 border-b border-slate-100 gap-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">Room Availability &amp; Schedule</h2>
+              <p class="text-xs text-slate-500 mt-0.5">View real-time room occupancy and booked timings for any present
+                or future date</p>
+            </div>
+
+            <!-- Date Filter Picker for Schedule -->
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <label class="text-xs font-semibold text-slate-600 whitespace-nowrap"
+                for="sched-date-picker">Date:</label>
+              <input type="date" id="sched-date-picker"
+                class="h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 shadow-2xs focus:ring-2 focus:ring-slate-950">
+              <button id="btn-sched-today"
+                class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer">Today</button>
+            </div>
+          </div>
+
+          <div
+            class="mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold"
+            id="sched-date">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>--</span>
+          </div>
+
+          <div id="schedule-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"></div>
+        </div>
+      </section>
+
+      <!-- Panel: My Bookings -->
+      <section id="panel-mine" class="panel hidden">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
+          <div class="mb-4 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">My Bookings</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Manage your upcoming and past room reservations</p>
+          </div>
+
+          <p class="sm:hidden text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
+            <i data-lucide="chevrons-left-right" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Swipe table horizontally to view details</span>
+          </p>
+
+          <div
+            class="table-scroll overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 rounded-xl border border-slate-200/80 shadow-2xs">
+            <table class="w-full text-left text-xs sm:text-sm min-w-[700px]" id="my-bookings-table">
+              <thead
+                class="bg-slate-50/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-3.5 py-3">Booking ID</th>
+                  <th class="px-3.5 py-3">Date</th>
+                  <th class="px-3.5 py-3">Hall</th>
+                  <th class="px-3.5 py-3">Slot</th>
+                  <th class="px-3.5 py-3">Participants</th>
+                  <th class="px-3.5 py-3">Purpose</th>
+                  <th class="px-3.5 py-3">Status</th>
+                  <th class="px-3.5 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+          <p class="text-center text-xs sm:text-sm text-slate-400 italic py-8 hidden" id="my-bookings-empty">
+            You have no conference hall bookings yet.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ADMIN DASHBOARD -->
+  <!-- ============================================================ -->
+  <div id="view-admin" class="min-h-screen flex flex-col hidden backdrop-blur-[2px] bg-slate-900/10">
+
+    <!-- Top Admin Header: Executive Corporate Navy -->
+    <header
+      class="sticky top-0 z-30 executive-header px-3.5 sm:px-8 py-2.5 sm:py-3.5 shadow-md">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div
+            class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-600 border border-blue-400/40 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm shadow-blue-500/25 shrink-0">
+            AC
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <h1 class="text-xs sm:text-base font-bold text-white leading-tight truncate">Algorisys Conference Suite</h1>
+              <span
+                class="px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wide bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">Admin</span>
+            </div>
+            <p id="admin-who" class="text-[11px] sm:text-xs font-medium text-slate-300">Super Administrator Console</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button id="btn-goto-employee"
+            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold text-blue-200 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-400/30 transition cursor-pointer shadow-2xs">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-300"></i>
+            <span class="hidden sm:inline">Book as Employee</span>
+            <span class="sm:hidden">Book</span>
+          </button>
+          <div
+            class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-800/90 text-emerald-400 border border-slate-700/80 shadow-2xs whitespace-nowrap">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="admin-clock">--:--</span>
+          </div>
+          <button id="admin-logout"
+            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer border border-white/10">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Log out</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Sub-navigation tabs (scrollable on mobile) -->
+    <div class="max-w-6xl w-full mx-auto px-3.5 sm:px-8 pt-4 sm:pt-6">
+      <div class="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+        <nav
+          class="tabbar inline-flex items-center gap-1 p-1 bg-white/80 backdrop-blur-md rounded-xl border border-slate-200/80 shadow-xs min-w-max"
+          role="tablist">
+          <button
+            class="tabbar-btn active inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-admin-overview">
+            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+            <span>Overview</span>
+          </button>
+          <button
+            class="tabbar-btn inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-admin-allot">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+            <span>Allot meeting</span>
+          </button>
+          <button
+            class="tabbar-btn inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-admin-bookings">
+            <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+            <span>All bookings</span>
+          </button>
+          <button
+            class="tabbar-btn inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold text-slate-600 transition cursor-pointer whitespace-nowrap"
+            data-panel="panel-admin-users">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>Employees</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Admin Content Area -->
+    <main class="max-w-6xl w-full mx-auto px-3.5 sm:px-8 py-4 sm:py-6 flex-1">
+
+      <!-- Panel: Admin Overview (Responsive 2x2 grid on mobile, 4 columns on desktop) -->
+      <section id="panel-admin-overview" class="panel">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-2 sm:mb-3">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Today's</span>
+              <div
+                class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="calendar-check" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="stat-today">0</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Bookings today</p>
+          </div>
+
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-2 sm:mb-3">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Active</span>
+              <div
+                class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="radio" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="stat-active">0</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Ongoing meetings today</p>
+          </div>
+
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-2 sm:mb-3">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Cancelled</span>
+              <div
+                class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <i data-lucide="ban" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="stat-cancelled">0</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Total cancellations</p>
+          </div>
+
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-2 sm:mb-3">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Employees</span>
+              <div class="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="stat-employees">0</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Registered staff</p>
+          </div>
+
+        </div>
+
+        <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600"></i>
+            <span>Administrator Privileges</span>
+          </h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            As an Administrator, you have full control over the booking engine: you can allot meetings to any employee
+            for present or future dates, review and cancel any active reservation, and activate or deactivate user
+            accounts.
+          </p>
+        </div>
+      </section>
+
+      <!-- Panel: Admin Allot Meeting (Admin Power) -->
+      <section id="panel-admin-allot" class="panel hidden">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
+
+          <div class="mb-5 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">Allot Meeting Room (Admin Power)</h2>
+            <p class="text-xs text-slate-500 mt-1">Assign and schedule a conference room for any employee on today or
+              any future date.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-user">Assign to Employee <span class="text-rose-500 font-bold">*</span></label>
+              <select id="allot-user" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+                <option value="">-- Select Employee --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-hall">Conference Hall <span class="text-rose-500 font-bold">*</span></label>
+              <select id="allot-hall" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+                <option value="">-- Select Conference Hall --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-date">Meeting Date <span class="text-rose-500 font-bold">*</span></label>
+              <input type="date" id="allot-date" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-start">Start Time <span class="text-rose-500 font-bold">*</span></label>
+              <input type="time" id="allot-start" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-end">End Time <span class="text-rose-500 font-bold">*</span></label>
+              <input type="time" id="allot-end" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+                for="allot-attendees">Members Count <span class="text-rose-500 font-bold">*</span></label>
+              <input type="number" id="allot-attendees" min="1" max="100" value="1" required
+                class="w-full h-11 sm:h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+            </div>
+          </div>
+
+          <!-- Visual Hall Preview for Admin Allotment -->
+          <div id="admin-hall-preview" class="hidden mb-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 transition-all flex flex-col sm:flex-row items-center gap-4">
+            <div class="h-24 w-full sm:w-36 rounded-xl overflow-hidden shrink-0 relative bg-slate-900 border border-slate-200">
+              <img id="admin-hall-preview-img" src="/images/board-room.jpg" alt="Hall Preview" class="w-full h-full object-cover object-center">
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <h4 id="admin-hall-preview-title" class="text-sm font-bold text-slate-900">Board Room</h4>
+                <span id="admin-hall-preview-capacity" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">16 Seats</span>
+              </div>
+              <p id="admin-hall-preview-desc" class="text-xs text-slate-500 mb-1.5">Executive Suite · Leadership &amp; Board Meetings</p>
+              <div id="admin-hall-preview-chips" class="flex flex-wrap gap-1.5 text-[10px] text-slate-600">
+                <span class="px-2 py-0.5 rounded bg-white border border-slate-200">4K Dual Video Wall</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Polycom VC</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Conference Mic Array</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+              for="allot-participants">Participant Names &amp; Attendees <span class="text-rose-500 font-bold">*</span></label>
+            <input type="text" id="allot-participants" list="colleagues-list" required placeholder="Names or company emails separated by commas"
+              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs">
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+              <i data-lucide="mail-check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+              <span>Invitations with meeting pass will be emailed to all attendees and the assigned employee.</span>
+            </p>
+          </div>
+
+          <div class="mt-4">
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
+              for="allot-purpose">Meeting Purpose / Reason <span class="text-rose-500 font-bold">*</span></label>
+            <textarea id="allot-purpose" maxlength="300" rows="3" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 transition shadow-2xs"></textarea>
+          </div>
+
+          <div class="mt-5 flex items-center gap-3">
+            <button id="btn-admin-allot-submit"
+              class="w-full sm:w-auto h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-6 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.99] transition shadow-sm cursor-pointer">
+              <i data-lucide="calendar-check-2" class="w-4 h-4"></i>
+              <span>Allot meeting &amp; notify employee</span>
+            </button>
+          </div>
+          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200 mt-3"
+            id="allot-error"></p>
+
+        </div>
+      </section>
+
+      <!-- Panel: Admin All Bookings -->
+      <section id="panel-admin-bookings" class="panel hidden">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
+
+          <div class="mb-4 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">All Hall Bookings</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Filter, monitor and manage reservations across halls</p>
+          </div>
+
+          <!-- Filters Row (Responsive layout) -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 sm:gap-3 p-3.5 sm:p-4 bg-slate-50/90 rounded-xl border border-slate-200/80 mb-5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Date</label>
+              <input type="date" id="filter-date"
+                class="w-full h-10 sm:h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 shadow-2xs">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Hall</label>
+              <select id="filter-hall"
+                class="w-full h-10 sm:h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 shadow-2xs">
+                <option value="">All halls</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Employee</label>
+              <input type="text" id="filter-employee" placeholder="Search name or email"
+                class="w-full h-10 sm:h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 shadow-2xs">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Status</label>
+              <select id="filter-status"
+                class="w-full h-10 sm:h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 shadow-2xs">
+                <option value="">All statuses</option>
+                <option value="BOOKED">Booked (Upcoming / Active)</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 sm:flex sm:items-end">
+              <button id="btn-apply-filters"
+                class="w-full h-10 sm:h-9 px-3 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition cursor-pointer shadow-2xs">
+                Apply
+              </button>
+              <button id="btn-clear-filters"
+                class="w-full h-10 sm:h-9 px-3 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition cursor-pointer shadow-2xs">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <p class="sm:hidden text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
+            <i data-lucide="chevrons-left-right" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Swipe table horizontally to view full details</span>
+          </p>
+
+          <!-- Bookings Table with Members column -->
+          <div
+            class="table-scroll overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 rounded-xl border border-slate-200/80 shadow-2xs">
+            <table class="w-full text-left text-xs min-w-[1020px]">
+              <thead
+                class="bg-slate-50/80 font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Booking ID</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Date</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Slot</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Hall</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Participants</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Employee</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Email</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Department</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Purpose</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Status</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Created</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Cancelled At</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Cancelled By</th>
+                  <th class="px-3.5 py-3 text-right whitespace-nowrap">Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-bookings-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Panel: Admin Employees -->
+      <section id="panel-admin-users" class="panel hidden">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
+
+          <div class="mb-4 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">Employee Accounts</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Manage employee access, roles, and status</p>
+          </div>
+
+          <p class="sm:hidden text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
+            <i data-lucide="chevrons-left-right" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Swipe table horizontally to view full details</span>
+          </p>
+
+          <div
+            class="table-scroll overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 rounded-xl border border-slate-200/80 shadow-2xs">
+            <table class="w-full text-left text-xs min-w-[780px]">
+              <thead
+                class="bg-slate-50/80 font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3 whitespace-nowrap">Name</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Email</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Department</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Role</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Status</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Created</th>
+                  <th class="px-4 py-3 text-right whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- EXECUTIVE CONFERENCE RESERVATION PASS MODAL (BOOKING DONE) -->
+  <!-- ============================================================ -->
+  <div id="modal-booking-pass" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md">
+    <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-modal-pop">
+      <!-- Header Visual with Glowing Electronic Door Tablet -->
+      <div class="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-950">
+        <img src="/images/conference-reserved.jpg" alt="Conference Hall Reserved" class="w-full h-full object-cover object-center animate-ken-burns">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-transparent"></div>
+        
+        <div class="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-bold shadow-md backdrop-blur-md animate-pulse">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+            <span>HALL RESERVED SUCCESSFULLY</span>
+          </span>
+          <button type="button" id="btn-close-pass" class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition cursor-pointer">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="absolute bottom-3 left-4 right-4 text-white">
+          <div class="flex items-center justify-between">
+            <span id="pass-booking-code" class="text-xs font-mono font-bold text-emerald-400 tracking-wider">#ALG-CONF-2026</span>
+            <span id="pass-attendees-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">-- Attendees</span>
+          </div>
+          <h3 id="pass-hall-name" class="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">Board Room</h3>
+        </div>
+      </div>
+
+      <!-- Pass Body -->
+      <div class="p-5 sm:p-6 space-y-4">
+        <!-- Date & Time Slot Grid -->
+        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Reserved Date</span>
+            <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800">
+              <i data-lucide="calendar" class="w-4 h-4 text-blue-600 shrink-0"></i>
+              <span id="pass-date">28 Sep 2026</span>
+            </div>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Time Window</span>
+            <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800">
+              <i data-lucide="clock" class="w-4 h-4 text-blue-600 shrink-0"></i>
+              <span id="pass-time">10:00 - 11:30 IST</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Participants & Purpose -->
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded-xl bg-blue-50/60 border border-blue-100 flex items-start gap-2.5">
+            <i data-lucide="users" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+            <div class="min-w-0">
+              <span class="font-bold text-slate-900 block mb-0.5">Meeting Participants:</span>
+              <span id="pass-participants" class="text-slate-600 break-words">--</span>
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+            <i data-lucide="target" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
+            <div class="min-w-0">
+              <span class="font-bold text-slate-900 block mb-0.5">Meeting Purpose / Agenda:</span>
+              <span id="pass-purpose" class="text-slate-600 break-words">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification dispatch alert -->
+        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] text-emerald-800 font-medium">
+          <i data-lucide="bell-ring" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+          <span>Calendar invitation &amp; meeting confirmation dispatched successfully.</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+          <button type="button" id="btn-pass-view-bookings"
+            class="w-full sm:flex-1 h-11 inline-flex items-center justify-center gap-2 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 active:scale-[0.99] transition cursor-pointer">
+            <i data-lucide="calendar-days" class="w-4 h-4"></i>
+            <span>View All Bookings</span>
+          </button>
+          <button type="button" id="btn-pass-book-another"
+            class="w-full sm:w-auto h-11 inline-flex items-center justify-center gap-2 px-5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-[0.99] transition cursor-pointer">
+            <span>Done</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datalist for registered colleagues / attendees auto-suggestion -->
+  <datalist id="colleagues-list"></datalist>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
