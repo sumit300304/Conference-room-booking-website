@@ -21,6 +21,7 @@ if (!process.env.SESSION_SECRET) {
 }
 
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
 // Allow local development frontends (e.g. Live Server on port 5500 or port 3000)
 app.use((req, res, next) => {
