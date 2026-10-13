@@ -1,9 +1,10 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { getIndiaNow, isValidDateString, isValidTimeString } = require('../utils/time');
 const { formatBookingCode } = require('../utils/bookingId');
-const { sendBookingConfirmationEmail } = require('../config/mailer');
+const { sendBookingConfirmationEmail, sendEmployeeWelcomeEmail } = require('../config/mailer');
 const { checkEndedMeetings } = require('../utils/meetingWatcher');
 const { resolveAttendeeEmails } = require('../utils/attendees');
 
@@ -301,7 +302,7 @@ router.post('/bookings/:id/cancel', (req, res) => {
 // ---------------------------------------------------------------
 router.get('/users', (req, res) => {
   const rows = db.prepare(`
-    SELECT id, full_name, email, department, role, active, created_at
+    SELECT id, full_name, email, department, designation, role, active, must_change_password, created_at
     FROM users
     ORDER BY created_at DESC
   `).all();
@@ -312,11 +313,89 @@ router.get('/users', (req, res) => {
       fullName: u.full_name,
       email: u.email,
       department: u.department,
+      designation: u.designation || '',
       role: u.role,
       active: Boolean(u.active),
+      mustChangePassword: Boolean(u.must_change_password),
       createdAt: u.created_at,
     })),
   });
+});
+
+// ---------------------------------------------------------------
+// POST /api/admin/users (Admin registers new employee)
+// ---------------------------------------------------------------
+router.post('/users', (req, res) => {
+  try {
+    let { fullName, email, department, designation, password, role } = req.body || {};
+    fullName = String(fullName || '').trim();
+    department = String(department || '').trim();
+    designation = String(designation || '').trim();
+    email = String(email || '').trim().toLowerCase();
+    password = String(password || '');
+    role = String(role || 'EMPLOYEE').toUpperCase().trim();
+
+    if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
+    if (!department) return res.status(400).json({ error: 'Department is required.' });
+    if (!designation) designation = 'Team Member';
+    if (!email) return res.status(400).json({ error: 'Company email is required.' });
+    if (!email.endsWith('@algorisys.com')) {
+      return res.status(400).json({ error: 'Only @algorisys.com email addresses are allowed.' });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Initial temporary password must be at least 8 characters long.' });
+    }
+    if (!['EMPLOYEE', 'ADMIN'].includes(role)) {
+      role = 'EMPLOYEE';
+    }
+
+    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (existingUser) {
+      return res.status(409).json({ error: `An account with email ${email} already exists.` });
+    }
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const now = new Date().toISOString();
+
+    const info = db.prepare(`
+      INSERT INTO users (full_name, email, department, designation, password_hash, role, verified, active, must_change_password, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1, ?)
+    `).run(fullName, email, department, designation, passwordHash, role, now);
+
+    const newUser = db.prepare(`
+      SELECT id, full_name, email, department, designation, role, active, must_change_password, created_at
+      FROM users WHERE id = ?
+    `).get(info.lastInsertRowid);
+
+    // Send welcome email with login credentials (asynchronous, non-blocking)
+    sendEmployeeWelcomeEmail({
+      toEmail: email,
+      fullName,
+      tempPassword: password,
+      department,
+      designation,
+    }).catch((mailErr) => {
+      console.warn('Could not send employee welcome email:', mailErr.message);
+    });
+
+    return res.json({
+      message: `Employee "${fullName}" successfully registered! They will set a new password on their first login.`,
+      user: {
+        id: newUser.id,
+        fullName: newUser.full_name,
+        email: newUser.email,
+        department: newUser.department,
+        designation: newUser.designation,
+        role: newUser.role,
+        active: Boolean(newUser.active),
+        mustChangePassword: Boolean(newUser.must_change_password),
+        createdAt: newUser.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('Error creating user by admin:', err);
+    return res.status(500).json({ error: 'Failed to create employee account.' });
+  }
 });
 
 // ---------------------------------------------------------------

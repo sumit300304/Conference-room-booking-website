@@ -19,10 +19,12 @@ CREATE TABLE IF NOT EXISTS users (
   full_name     TEXT NOT NULL,
   email         TEXT NOT NULL UNIQUE,
   department    TEXT NOT NULL,
+  designation   TEXT DEFAULT '',
   password_hash TEXT NOT NULL,
   role          TEXT NOT NULL DEFAULT 'EMPLOYEE' CHECK (role IN ('ADMIN','EMPLOYEE')),
   verified      INTEGER NOT NULL DEFAULT 1,
   active        INTEGER NOT NULL DEFAULT 1,
+  must_change_password INTEGER NOT NULL DEFAULT 0,
   created_at    TEXT NOT NULL
 );
 
@@ -89,6 +91,14 @@ if (!bookingColumns.includes('concluded_early')) {
 }
 if (!bookingColumns.includes('end_notified')) {
   db.exec(`ALTER TABLE bookings ADD COLUMN end_notified INTEGER NOT NULL DEFAULT 0`);
+}
+
+const userColumns = db.prepare(`PRAGMA table_info(users)`).all().map((c) => c.name);
+if (!userColumns.includes('designation')) {
+  db.exec(`ALTER TABLE users ADD COLUMN designation TEXT DEFAULT ''`);
+}
+if (!userColumns.includes('must_change_password')) {
+  db.exec(`ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`);
 }
 
 // ---- Seed halls (exactly two, only if not already present) ----

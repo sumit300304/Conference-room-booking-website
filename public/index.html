@@ -191,23 +191,14 @@
           </div>
         </div>
 
-        <!-- Segmented Tabs -->
-        <nav
-          class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 mb-5 sm:mb-6 border border-slate-200/60"
-          role="tablist">
-          <button
-            class="auth-tab active flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg transition-all cursor-pointer"
-            data-tab="login" role="tab">
-            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
-            <span>Log in</span>
-          </button>
-          <button
-            class="auth-tab flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg transition-all cursor-pointer"
-            data-tab="register" role="tab">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-            <span>Register</span>
-          </button>
-        </nav>
+        <!-- Authentication Heading -->
+        <div class="mb-5 sm:mb-6">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Corporate Portal Sign In</h2>
+          </div>
+          <p class="text-xs text-slate-500">Sign in with your Algorisys employee credentials.</p>
+        </div>
 
         <!-- LOGIN FORM -->
         <form id="form-login" class="space-y-4">
@@ -246,6 +237,14 @@
           </button>
           <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
             id="login-error"></p>
+
+          <div class="mt-4 pt-3.5 border-t border-slate-100 flex items-start gap-2.5 text-[11px] text-slate-500">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+            <div>
+              <span class="font-semibold text-slate-700">Account Registration Notice:</span>
+              <p class="text-slate-500 mt-0.5">Employee accounts are registered by the System Administrator. Upon first login with your assigned credentials, you will be prompted to create your new personal password.</p>
+            </div>
+          </div>
         </form>
 
         <!-- FORGOT PASSWORD: STEP 1 (REQUEST OTP) -->
@@ -361,106 +360,6 @@
           </div>
           <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
             id="forgot-reset-error"></p>
-        </form>
-
-        <!-- REGISTER FORM -->
-        <form id="form-register" class="space-y-3.5 hidden">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="reg-name">Full
-              name</label>
-            <input type="text" id="reg-name" required autocomplete="name" placeholder="John Doe"
-              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="reg-email">Company
-              email</label>
-            <input type="email" id="reg-email" placeholder="firstname.lastname@algorisys.com" required
-              autocomplete="username"
-              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-            <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-              <i data-lucide="info" class="w-3 h-3 text-slate-400 shrink-0"></i>
-              Only @algorisys.com email addresses are allowed.
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
-              for="reg-department">Department</label>
-            <input type="text" id="reg-department" required placeholder="e.g. Accounts, HR, Engineering"
-              class="w-full h-11 sm:h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
-                for="reg-password">Password</label>
-              <div class="relative">
-                <input type="password" id="reg-password" minlength="8" required autocomplete="new-password"
-                  placeholder="Min 8 chars"
-                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition" data-target="reg-password" tabindex="-1" title="Toggle password visibility">
-                  <i data-lucide="eye" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1"
-                for="reg-confirm">Confirm</label>
-              <div class="relative">
-                <input type="password" id="reg-confirm" minlength="8" required autocomplete="new-password"
-                  placeholder="Re-enter"
-                  class="w-full h-11 sm:h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-                <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition" data-target="reg-confirm" tabindex="-1" title="Toggle password visibility">
-                  <i data-lucide="eye" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button type="submit"
-            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer mt-1">
-            <span>Create account</span>
-            <i data-lucide="user-check" class="w-4 h-4"></i>
-          </button>
-          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
-            id="register-error"></p>
-        </form>
-
-        <!-- OTP VERIFY FORM -->
-        <form id="form-otp" class="space-y-4 hidden">
-          <div class="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-start gap-2.5">
-            <i data-lucide="shield-check" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
-            <div>
-              <p class="text-xs font-medium text-blue-900" id="otp-target-text">Verification code sent to your company
-                email.</p>
-              <p class="text-[11px] text-blue-700 mt-0.5">Expires in 10 minutes.</p>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5"
-              for="otp-code">6-digit verification code</label>
-            <input type="text" id="otp-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required
-              placeholder="000000"
-              class="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg text-center tracking-[0.35em] font-mono font-bold text-xl text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
-          </div>
-
-          <button type="submit"
-            class="w-full h-11 sm:h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99] transition shadow-md shadow-blue-500/20 cursor-pointer">
-            <i data-lucide="check-circle" class="w-4 h-4"></i>
-            <span>Verify &amp; create account</span>
-          </button>
-
-          <div class="text-center pt-1">
-            <button type="button" id="btn-resend-otp"
-              class="text-xs font-semibold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1.5 cursor-pointer py-1">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span>Resend code</span>
-            </button>
-          </div>
-          <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200"
-            id="otp-error"></p>
         </form>
 
       </div>
@@ -1203,9 +1102,16 @@
       <section id="panel-admin-users" class="panel hidden">
         <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-8">
 
-          <div class="mb-4 sm:mb-6">
-            <h2 class="text-base sm:text-lg font-bold text-slate-900">Employee Accounts</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Manage employee access, roles, and status</p>
+          <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">Employee Directory &amp; Accounts</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Administer employee accounts, provision initial credentials, and manage roles</p>
+            </div>
+            <button id="btn-open-register-employee" type="button"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 active:scale-[0.99] transition cursor-pointer self-start sm:self-auto">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Register New Employee</span>
+            </button>
           </div>
 
           <p class="sm:hidden text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
@@ -1215,15 +1121,17 @@
 
           <div
             class="table-scroll overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 rounded-xl border border-slate-200/80 shadow-2xs">
-            <table class="w-full text-left text-xs min-w-[780px]">
+            <table class="w-full text-left text-xs min-w-[920px]">
               <thead
                 class="bg-slate-50/80 font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th class="px-4 py-3 whitespace-nowrap">Name</th>
                   <th class="px-4 py-3 whitespace-nowrap">Email</th>
                   <th class="px-4 py-3 whitespace-nowrap">Department</th>
+                  <th class="px-4 py-3 whitespace-nowrap">Designation</th>
                   <th class="px-4 py-3 whitespace-nowrap">Role</th>
                   <th class="px-4 py-3 whitespace-nowrap">Status</th>
+                  <th class="px-4 py-3 whitespace-nowrap">First Login</th>
                   <th class="px-4 py-3 whitespace-nowrap">Created</th>
                   <th class="px-4 py-3 text-right whitespace-nowrap">Actions</th>
                 </tr>
@@ -1324,6 +1232,188 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FIRST-TIME LOGIN: SET NEW PASSWORD MANDATORY MODAL -->
+  <!-- ============================================================ -->
+  <div id="modal-first-time-password" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-modal-pop">
+      <!-- Header Visual with Key / Shield -->
+      <div class="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-7">
+        <div class="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center mb-3.5 shadow-inner">
+          <i data-lucide="key-round" class="w-6 h-6 text-blue-400"></i>
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold uppercase tracking-wider mb-2 border border-blue-400/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+          First-Time Login Security Setup
+        </span>
+        <h3 class="text-xl font-black text-white tracking-tight">Create Your Permanent Password</h3>
+        <p class="text-xs text-slate-300 mt-1">
+          Welcome to Algorisys, <strong id="first-login-name" class="text-white">Employee</strong>! To secure your account, please enter a new password before accessing the system.
+        </p>
+      </div>
+
+      <!-- Form Body -->
+      <form id="form-first-time-password" class="p-6 sm:p-7 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5" for="first-login-new-password">
+            New Password
+          </label>
+          <div class="relative">
+            <input type="password" id="first-login-new-password" minlength="8" required autocomplete="new-password" placeholder="•••••••• (Min 8 characters)"
+              class="w-full h-11 px-3.5 pr-10 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+            <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" data-target="first-login-new-password" tabindex="-1">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5" for="first-login-confirm-password">
+            Confirm New Password
+          </label>
+          <div class="relative">
+            <input type="password" id="first-login-confirm-password" minlength="8" required autocomplete="new-password" placeholder="Re-enter new password"
+              class="w-full h-11 px-3.5 pr-10 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+            <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" data-target="first-login-confirm-password" tabindex="-1">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+          <div class="flex items-center gap-1.5 font-medium text-slate-700">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+            <span>Security Note:</span>
+          </div>
+          <ul class="list-disc list-inside text-slate-500 pl-1 space-y-0.5">
+            <li>Minimum 8 characters</li>
+            <li>This setup is required once only on your initial login</li>
+          </ul>
+        </div>
+
+        <button type="submit" id="btn-submit-first-login"
+          class="w-full h-11 inline-flex items-center justify-center gap-2 px-4 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 active:scale-[0.99] transition cursor-pointer mt-1">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save Password &amp; Enter Suite</span>
+        </button>
+
+        <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200" id="first-login-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ADMIN MODAL: REGISTER NEW EMPLOYEE -->
+  <!-- ============================================================ -->
+  <div id="modal-register-employee" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md">
+    <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-modal-pop">
+      <!-- Header -->
+      <div class="relative bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+            <i data-lucide="user-plus" class="w-5 h-5 text-blue-400"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white">Register New Employee</h3>
+            <p class="text-xs text-slate-400">Create employee account &amp; set initial login credentials</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-register-modal" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <form id="form-admin-register-employee" class="p-5 sm:p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="admin-emp-name">
+            Full Name <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="admin-emp-name" required placeholder="e.g. Rahul Sharma"
+            class="w-full h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="admin-emp-email">
+            Company Email (@algorisys.com) <span class="text-rose-500">*</span>
+          </label>
+          <input type="email" id="admin-emp-email" required placeholder="rahul.sharma@algorisys.com"
+            class="w-full h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+            <i data-lucide="shield-check" class="w-3 h-3 text-blue-500 shrink-0"></i>
+            Must end with @algorisys.com
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="admin-emp-dept">
+              Department <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="admin-emp-dept" required placeholder="e.g. Engineering, Sales, HR"
+              class="w-full h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="admin-emp-designation">
+              Designation
+            </label>
+            <input type="text" id="admin-emp-designation" placeholder="e.g. Senior Software Engineer"
+              class="w-full h-10 px-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase" for="admin-emp-password">
+                Initial Password <span class="text-rose-500">*</span>
+              </label>
+              <button type="button" id="btn-admin-gen-password" class="text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer">
+                Auto-generate
+              </button>
+            </div>
+            <div class="relative">
+              <input type="password" id="admin-emp-password" minlength="8" required placeholder="Min 8 chars"
+                class="w-full h-10 px-3.5 pr-9 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs font-mono">
+              <button type="button" class="btn-toggle-pwd absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" data-target="admin-emp-password" tabindex="-1">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1" for="admin-emp-role">
+              Account Role
+            </label>
+            <select id="admin-emp-role"
+              class="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition shadow-2xs">
+              <option value="EMPLOYEE" selected>Employee (Standard)</option>
+              <option value="ADMIN">Administrator (Full Access)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+          <span>The employee will log in using this initial password. Upon first login, they will be prompted to create their permanent password.</span>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" id="btn-cancel-register-emp"
+            class="px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="btn-submit-register-emp"
+            class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20 active:scale-[0.99] transition cursor-pointer">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>Register Employee</span>
+          </button>
+        </div>
+
+        <p class="text-xs text-rose-600 font-medium empty:hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200" id="admin-register-error"></p>
+      </form>
     </div>
   </div>
 

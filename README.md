@@ -153,23 +153,18 @@ admin, can call with `currentPassword`, `newPassword`, `confirmNewPassword`).
 ## 9. How employees use it
 
 1. Go to `http://your-server-address:3000` (or your deployed HTTPS URL).
-2. Register with a `@algorisys.com` email, full name, department, and password.
-3. Check email for a 6-digit code, enter it — the account is created and the
-   employee is logged in automatically.
-4. From the dashboard: pick a hall, pick a start/end time (today only),
-   click "Check availability", enter a purpose, then "Confirm booking".
-5. "Today's schedule" shows both halls' bookings (times only — no other
-   employees' personal details are shown to ordinary employees).
-6. "My bookings" lists the employee's own bookings and lets them cancel
-   any booking that hasn't started yet.
+2. Log in using the email and initial temporary password provisioned by your Administrator.
+3. **First-Time Login Security Setup:** Upon initial login, a form automatically appears prompting you to set your new personal password (min 8 characters). Once submitted, this setup is completed permanently.
+4. From the dashboard: pick a hall, select date and start/end time, select meeting attendees/colleagues, enter meeting purpose, and confirm booking.
+5. "Today's schedule" shows live occupancy for both halls in Asia/Kolkata (IST) time.
+6. "My bookings" lists your bookings, lets you cancel future bookings, or conclude meetings early to instantly free rooms for colleagues.
 
 ## 10. How admins use it
 
-Log in with the admin account to see a separate dashboard: summary counts,
-a fully filterable table of every booking (by date, hall, employee, status)
-with full employee details, the ability to cancel any booking at any time,
-and a table of all employees with an activate/deactivate toggle (an admin
-cannot deactivate their own currently-logged-in account).
+1. Log in with the admin account to access the Executive Admin Console.
+2. **Register Employees:** In the "Employee Accounts" panel, click "Register New Employee" to provision accounts by entering Full Name, Company Email (`@algorisys.com`), Department, Designation, and initial password (with auto-generation).
+3. **Monitor & Override:** View summary metrics, master booking table with multi-filters, allot rooms on behalf of teams, and cancel any booking.
+4. **Account Governance:** Toggle employee active/deactive status, promote/demote administrator rights, or remove accounts. First-time login status is displayed for every employee.
 
 ---
 
@@ -245,24 +240,29 @@ checked on the server regardless of what the client sends.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | /signup | — | Register (starts OTP verification) |
-| POST | /verify-email | — | Verify OTP, creates account, logs in |
-| POST | /resend-verification | — | Resend a fresh OTP |
 | POST | /login | — | Log in with email + password |
 | POST | /logout | auth | Log out |
 | GET  | /me | auth | Current user info |
+| POST | /first-time-password | auth | First-time login: create permanent password |
 | POST | /change-password | auth | Change own password |
+| POST | /forgot-password | — | Request 6-digit password reset OTP |
+| POST | /reset-password | — | Reset password using 6-digit OTP |
 | GET  | /halls | auth | List active halls |
-| GET  | /bookings/today | auth | Today's schedule for both halls |
+| GET  | /colleagues | auth | Search registered colleagues for invitations |
+| GET  | /bookings/schedule | auth | Live schedule for both halls (IST) |
 | GET  | /bookings/my | auth | Current user's bookings |
-| POST | /bookings/check-availability | auth | Check a hall/time slot |
-| POST | /bookings | auth | Create a booking |
+| POST | /bookings | auth | Create a booking with attendees & participants |
 | POST | /bookings/:id/cancel | auth | Cancel own booking (before start time) |
-| GET  | /admin/summary | admin | Dashboard counters |
-| GET  | /admin/bookings | admin | All bookings, filterable |
+| POST | /bookings/:id/end-early | auth | Conclude meeting early and free hall immediately |
+| GET  | /admin/summary | admin | Dashboard counters & live occupancy |
+| GET  | /admin/bookings | admin | All bookings, multi-filterable |
+| POST | /admin/bookings | admin | Allot meeting on behalf of employee |
 | POST | /admin/bookings/:id/cancel | admin | Cancel any booking, any time |
-| GET  | /admin/users | admin | All employees/admins |
+| GET  | /admin/users | admin | All employees/admins with first-login status |
+| POST | /admin/users | admin | Register new employee account |
 | POST | /admin/users/:id/toggle | admin | Activate/deactivate a user |
+| POST | /admin/users/:id/role | admin | Change user role (ADMIN / EMPLOYEE) |
+| DELETE | /admin/users/:id | admin | Permanently delete employee from database |
 
 ---
 

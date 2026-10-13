@@ -264,11 +264,65 @@ async function sendPasswordResetOtpEmail(toEmail, fullName, otp) {
   });
 }
 
+/**
+ * Sends welcome email to newly registered employee with temporary credentials.
+ */
+async function sendEmployeeWelcomeEmail({ toEmail, fullName, tempPassword, department, designation }) {
+  const t = getTransporter();
+  if (!t) {
+    console.log(`[DEV NOTIFICATION - EMPLOYEE REGISTERED] To: ${fullName} <${toEmail}> | Temp Password: ${tempPassword}`);
+    return;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await t.sendMail({
+    from,
+    to: toEmail,
+    subject: 'Welcome to Algorisys Conference Suite - Your Account Credentials',
+    text: `Hello ${fullName},\n\nYour employee account for the Algorisys Conference Hall Booking system has been created by the Administrator.\n\nLogin Email: ${toEmail}\nTemporary Password: ${tempPassword}\nDepartment: ${department || 'General'}\nDesignation: ${designation || 'Team Member'}\n\nPlease log in at your corporate portal and set your new permanent password.\n\n- Algorisys Conference Hall Booking System`,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #0f172a; color: #ffffff; padding: 22px 24px;">
+          <h2 style="margin: 0; font-size: 19px; font-weight: 700;">Welcome to Algorisys Conference Suite</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">Corporate Room Reservation System</p>
+        </div>
+        <div style="padding: 24px; background: #ffffff;">
+          <p style="margin-top: 0; font-size: 15px;">Hello <strong>${fullName}</strong>,</p>
+          <p style="font-size: 14px; color: #334155;">Your employee account has been created by the System Administrator. You can now log in to view availability and book conference halls.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin: 20px 0;">
+            <div style="margin-bottom: 10px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block;">Login Email</span>
+              <span style="font-size: 14px; font-weight: 600; color: #0f172a;">${toEmail}</span>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block;">Temporary Password</span>
+              <span style="font-size: 15px; font-family: monospace; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 6px; display: inline-block;">${tempPassword}</span>
+            </div>
+            ${department ? `<div style="margin-bottom: 6px;"><span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block;">Department</span><span style="font-size: 13px; color: #334155;">${department}</span></div>` : ''}
+            ${designation ? `<div><span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block;">Designation</span><span style="font-size: 13px; color: #334155;">${designation}</span></div>` : ''}
+          </div>
+
+          <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 13px; color: #1e40af; font-weight: 500;">
+              <strong>Note:</strong> When you log in for the first time with this temporary password, the system will prompt you to set your new permanent password.
+            </p>
+          </div>
+
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">If you have any questions, please reach out to your system administrator.</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 module.exports = {
   isSmtpConfigured,
   sendOtpEmail,
   sendPasswordResetOtpEmail,
   sendBookingConfirmationEmail,
   sendMeetingEndedEmail,
+  sendEmployeeWelcomeEmail,
 };
 

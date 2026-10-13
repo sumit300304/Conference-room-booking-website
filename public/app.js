@@ -98,26 +98,18 @@
   // =================================================================
   // AUTH SCREEN
   // =================================================================
-  const authTabs = document.querySelectorAll('.auth-tab');
   const formLogin = document.getElementById('form-login');
-  const formRegister = document.getElementById('form-register');
-  const formOtp = document.getElementById('form-otp');
   const formForgotRequest = document.getElementById('form-forgot-request');
   const formForgotReset = document.getElementById('form-forgot-reset');
 
   function showAuthForm(name) {
-    [formLogin, formRegister, formOtp, formForgotRequest, formForgotReset].forEach((f) => {
+    [formLogin, formForgotRequest, formForgotReset].forEach((f) => {
       if (f) f.classList.add('hidden');
     });
     const target = document.getElementById(`form-${name}`);
     if (target) target.classList.remove('hidden');
-    authTabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
     if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
   }
-
-  authTabs.forEach((tab) => {
-    tab.addEventListener('click', () => showAuthForm(tab.dataset.tab));
-  });
 
   // ---- Login ----
   formLogin.addEventListener('submit', async (e) => {
@@ -305,66 +297,85 @@
     });
   });
 
-  // ---- Register ----
-  let pendingEmail = '';
-  formRegister.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const errEl = document.getElementById('register-error');
-    errEl.textContent = '';
+  // =================================================================
+  // FIRST-TIME LOGIN PASSWORD SETUP MODAL
+  // =================================================================
+  const modalFirstTimePassword = document.getElementById('modal-first-time-password');
+  const formFirstTimePassword = document.getElementById('form-first-time-password');
 
-    const fullName = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const department = document.getElementById('reg-department').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const confirmPassword = document.getElementById('reg-confirm').value;
+  function openFirstTimePasswordModal(user) {
+    if (!modalFirstTimePassword) return;
+    const nameEl = document.getElementById('first-login-name');
+    if (nameEl && user) nameEl.textContent = user.fullName || 'Employee';
+    const errEl = document.getElementById('first-login-error');
+    if (errEl) errEl.textContent = '';
+    const newPassInput = document.getElementById('first-login-new-password');
+    const confirmPassInput = document.getElementById('first-login-confirm-password');
+    if (newPassInput) newPassInput.value = '';
+    if (confirmPassInput) confirmPassInput.value = '';
 
-    if (password !== confirmPassword) {
-      errEl.textContent = 'Password and Confirm Password do not match.';
-      return;
-    }
+    modalFirstTimePassword.classList.remove('hidden');
+    modalFirstTimePassword.classList.add('flex');
+    if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
+    newPassInput?.focus();
+  }
 
-    try {
-      const data = await api('/signup', { method: 'POST', body: { fullName, email, department, password, confirmPassword } });
-      pendingEmail = data.email || email;
-      const otpInput = document.getElementById('otp-code');
-      if (otpInput) {
-        otpInput.value = '';
-        otpInput.focus();
+  function closeFirstTimePasswordModal() {
+    if (!modalFirstTimePassword) return;
+    modalFirstTimePassword.classList.add('hidden');
+    modalFirstTimePassword.classList.remove('flex');
+  }
+
+  if (formFirstTimePassword) {
+    formFirstTimePassword.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('first-login-error');
+      if (errEl) errEl.textContent = '';
+
+      const newPassword = document.getElementById('first-login-new-password')?.value || '';
+      const confirmNewPassword = document.getElementById('first-login-confirm-password')?.value || '';
+
+      if (newPassword.length < 8) {
+        if (errEl) errEl.textContent = 'Password must be at least 8 characters long.';
+        return;
       }
-      showAuthForm('otp');
-      showToast(data.message || 'Verification code sent to your company email.', 'success');
-    } catch (err) {
-      errEl.textContent = err.message;
-    }
-  });
-
-  // ---- OTP verify ----
-  formOtp.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const errEl = document.getElementById('otp-error');
-    errEl.textContent = '';
-    const otp = document.getElementById('otp-code').value.trim();
-
-    try {
-      const data = await api('/verify-email', { method: 'POST', body: { email: pendingEmail, otp } });
-      showToast('Email verified. Account created successfully.', 'success');
-      routeUser(data.user);
-    } catch (err) {
-      errEl.textContent = err.message;
-    }
-  });
-
-  document.getElementById('btn-resend-otp').addEventListener('click', async () => {
-    try {
-      const data = await api('/resend-verification', { method: 'POST', body: { email: pendingEmail } });
-      if (data.devOtp) {
-        document.getElementById('otp-code').value = data.devOtp;
+      if (newPassword !== confirmNewPassword) {
+        if (errEl) errEl.textContent = 'New password and confirmation do not match.';
+        return;
       }
-      showToast(data.message || 'A new code has been sent.', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  });
+
+      const submitBtn = document.getElementById('btn-submit-first-login');
+      const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+
+      try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<span>Updating password...</span><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+          if (window.lucide) window.lucide.createIcons();
+        }
+
+        const data = await api('/first-time-password', {
+          method: 'POST',
+          body: { newPassword, confirmNewPassword },
+        });
+
+        if (currentUser) {
+          currentUser.mustChangePassword = false;
+        }
+
+        closeFirstTimePasswordModal();
+        showToast(data.message || 'Password successfully created! Welcome to your dashboard.', 'success');
+      } catch (err) {
+        if (errEl) errEl.textContent = err.message;
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHtml;
+          if (window.lucide) window.lucide.createIcons();
+        }
+      }
+    });
+  }
 
   // =================================================================
   // ROUTING (after login / on load)
@@ -389,6 +400,12 @@
       initEmployeeView(user);
       showOnly(viewEmployee);
     }
+
+    // Force mandatory password change on first login
+    if (user.mustChangePassword) {
+      openFirstTimePasswordModal(user);
+    }
+
     if (window.lucide) window.lucide.createIcons();
   }
 
@@ -1257,6 +1274,92 @@
     if (allotHallSelect) {
       allotHallSelect.addEventListener('change', updateAdminHallPreview);
     }
+
+    // Admin Register Employee Modal Handlers
+    const modalRegisterEmp = document.getElementById('modal-register-employee');
+    const btnOpenRegisterEmp = document.getElementById('btn-open-register-employee');
+    const btnCloseRegisterEmp = document.getElementById('btn-close-register-modal');
+    const btnCancelRegisterEmp = document.getElementById('btn-cancel-register-emp');
+    const btnGenPass = document.getElementById('btn-admin-gen-password');
+    const formAdminRegisterEmp = document.getElementById('form-admin-register-employee');
+
+    function openRegisterEmployeeModal() {
+      if (!modalRegisterEmp) return;
+      const errEl = document.getElementById('admin-register-error');
+      if (errEl) errEl.textContent = '';
+      formAdminRegisterEmp?.reset();
+      modalRegisterEmp.classList.remove('hidden');
+      modalRegisterEmp.classList.add('flex');
+      if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
+      document.getElementById('admin-emp-name')?.focus();
+    }
+
+    function closeRegisterEmployeeModal() {
+      if (!modalRegisterEmp) return;
+      modalRegisterEmp.classList.add('hidden');
+      modalRegisterEmp.classList.remove('flex');
+    }
+
+    if (btnOpenRegisterEmp) btnOpenRegisterEmp.addEventListener('click', openRegisterEmployeeModal);
+    if (btnCloseRegisterEmp) btnCloseRegisterEmp.addEventListener('click', closeRegisterEmployeeModal);
+    if (btnCancelRegisterEmp) btnCancelRegisterEmp.addEventListener('click', closeRegisterEmployeeModal);
+
+    if (btnGenPass) {
+      btnGenPass.addEventListener('click', () => {
+        const passInput = document.getElementById('admin-emp-password');
+        if (passInput) {
+          const randomNum = Math.floor(1000 + Math.random() * 9000);
+          passInput.value = `Algorisys@${randomNum}`;
+          passInput.type = 'text';
+        }
+      });
+    }
+
+    if (formAdminRegisterEmp) {
+      formAdminRegisterEmp.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errEl = document.getElementById('admin-register-error');
+        if (errEl) errEl.textContent = '';
+
+        const fullName = document.getElementById('admin-emp-name')?.value.trim();
+        const email = document.getElementById('admin-emp-email')?.value.trim();
+        const department = document.getElementById('admin-emp-dept')?.value.trim();
+        const designation = document.getElementById('admin-emp-designation')?.value.trim() || 'Team Member';
+        const password = document.getElementById('admin-emp-password')?.value;
+        const role = document.getElementById('admin-emp-role')?.value || 'EMPLOYEE';
+
+        const submitBtn = document.getElementById('btn-submit-register-emp');
+        const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+
+        try {
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>Registering...</span><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+          }
+
+          const data = await api('/admin/users', {
+            method: 'POST',
+            body: { fullName, email, department, designation, password, role },
+          });
+
+          showToast(data.message || `Employee ${fullName} registered!`, 'success');
+          closeRegisterEmployeeModal();
+          refreshAdminUsers();
+          refreshAdminSummary();
+          loadUsersIntoAllotDropdown();
+          loadColleaguesDatalist();
+        } catch (err) {
+          if (errEl) errEl.textContent = err.message;
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
+            if (window.lucide) window.lucide.createIcons();
+          }
+        }
+      });
+    }
   }
 
   function updateAdminHallPreview() {
@@ -1548,12 +1651,18 @@
       data.users.forEach((u) => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50/70 transition-colors text-xs border-b border-slate-100 last:border-0';
+        const firstLoginBadge = u.mustChangePassword
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><i data-lucide="clock" class="w-3 h-3"></i>Pending First Login</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i data-lucide="check" class="w-3 h-3"></i>Password Set</span>`;
+
         tr.innerHTML = `
           <td class="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">${escapeHtml(u.fullName)}</td>
           <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${escapeHtml(u.email)}</td>
           <td class="px-4 py-3 text-slate-700 whitespace-nowrap">${escapeHtml(u.department)}</td>
+          <td class="px-4 py-3 text-slate-600 whitespace-nowrap font-medium">${escapeHtml(u.designation || '—')}</td>
           <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide ${u.role === 'ADMIN' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600'}">${u.role}</span></td>
           <td class="px-4 py-3"><span class="status-pill ${u.active ? 'BOOKED' : 'CANCELLED'}">${u.active ? 'Active' : 'Inactive'}</span></td>
+          <td class="px-4 py-3 whitespace-nowrap">${firstLoginBadge}</td>
           <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${formatDateTime(u.createdAt)}</td>
           <td class="px-4 py-3 text-right whitespace-nowrap"></td>
         `;

@@ -36,7 +36,9 @@ function publicUser(user) {
     fullName: user.full_name,
     email: user.email,
     department: user.department,
+    designation: user.designation || '',
     role: user.role,
+    mustChangePassword: Boolean(user.must_change_password),
   };
 }
 
@@ -49,82 +51,12 @@ function loginSession(req, user, res, callback) {
 }
 
 // ---------------------------------------------------------------
-// POST /api/signup
+// POST /api/signup (Self-registration disabled - Accounts created by Admin)
 // ---------------------------------------------------------------
 router.post('/signup', async (req, res) => {
-  try {
-    let { fullName, email, department, password, confirmPassword } = req.body || {};
-    fullName = String(fullName || '').trim();
-    department = String(department || '').trim();
-    email = normalizeEmail(email);
-
-    if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
-    if (!department) return res.status(400).json({ error: 'Department is required.' });
-    if (!email) return res.status(400).json({ error: 'Company email is required.' });
-    if (!isCompanyEmail(email)) {
-      return res.status(400).json({ error: 'Only @algorisys.com email addresses are allowed.' });
-    }
-    if (typeof password !== 'string' || password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
-    }
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: 'Password and Confirm Password do not match.' });
-    }
-
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existingUser) {
-      return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
-    }
-
-    const passwordHash = bcrypt.hashSync(password, 10);
-    const smtpConfigured = isSmtpConfigured();
-
-    // If SMTP is not configured in the environment (e.g. initial Render deployment without SMTP),
-    // automatically activate and create the account so the user is never blocked from using the app.
-    if (!smtpConfigured) {
-      const now = new Date().toISOString();
-      const info = db.prepare(`
-        INSERT INTO users (full_name, email, department, password_hash, role, verified, active, created_at)
-        VALUES (?, ?, ?, ?, 'EMPLOYEE', 1, 1, ?)
-      `).run(fullName, email, department, passwordHash, now);
-
-      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
-
-      return loginSession(req, user, res, () => {
-        return res.json({
-          message: 'Account created successfully! Welcome to the Conference Suite.',
-          user: publicUser(user),
-        });
-      });
-    }
-
-    const otp = generateOtp();
-    const otpHash = bcrypt.hashSync(otp, 10);
-    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
-    const now = new Date().toISOString();
-
-    // Replace any previous pending verification for this email
-    db.prepare('DELETE FROM email_verifications WHERE email = ?').run(email);
-    db.prepare(`
-      INSERT INTO email_verifications (email, full_name, department, password_hash, otp_hash, expires_at, attempts, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, 0, ?)
-    `).run(email, fullName, department, passwordHash, otpHash, expiresAt, now);
-
-    try {
-      await sendOtpEmail(email, fullName, otp);
-    } catch (mailErr) {
-      console.error('Failed to send OTP email:', mailErr.message);
-      db.prepare('DELETE FROM email_verifications WHERE email = ?').run(email);
-      return res.status(502).json({
-        error: `Could not send verification email: ${mailErr.message}. Check your SMTP credentials in the Render Dashboard.`,
-      });
-    }
-
-    return res.json({ message: 'Verification code sent to your company email.', email });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Something went wrong during registration.' });
-  }
+  return res.status(403).json({
+    error: 'Employee self-registration is disabled. All employee accounts are created by the System Administrator. Please contact your administrator to receive your login credentials.',
+  });
 });
 
 // ---------------------------------------------------------------
@@ -324,6 +256,38 @@ router.post('/change-password', requireAuth, (req, res) => {
   const newHash = bcrypt.hashSync(newPassword, 10);
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
   res.json({ message: 'Password changed successfully.' });
+});
+
+// ---------------------------------------------------------------
+// POST /api/first-time-password (First-time login: create new permanent password)
+// ---------------------------------------------------------------
+router.post('/first-time-password', requireAuth, (req, res) => {
+  try {
+    const newPassword = String((req.body && req.body.newPassword) || '');
+    const confirmNewPassword = String((req.body && req.body.confirmNewPassword) || '');
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+    }
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: 'New password and confirmation do not match.' });
+    }
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')
+      .run(newHash, req.user.id);
+
+    req.user.must_change_password = 0;
+    const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+
+    return res.json({
+      message: 'New password set successfully! Welcome to Algorisys Conference Suite.',
+      user: publicUser(updatedUser),
+    });
+  } catch (err) {
+    console.error('Error updating first-time password:', err);
+    return res.status(500).json({ error: 'Could not update password. Please try again.' });
+  }
 });
 
 // ---------------------------------------------------------------
