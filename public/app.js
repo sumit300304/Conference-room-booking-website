@@ -1389,6 +1389,77 @@
         }
       });
     }
+
+    // Admin Edit Employee Modal Handlers
+    const btnCloseEditEmp = document.getElementById('btn-close-edit-modal');
+    const btnCancelEditEmp = document.getElementById('btn-cancel-edit-emp');
+    const btnEditGenPass = document.getElementById('btn-edit-gen-password');
+    const formAdminEditEmp = document.getElementById('form-admin-edit-employee');
+
+    if (btnCloseEditEmp) btnCloseEditEmp.addEventListener('click', closeEditEmployeeModal);
+    if (btnCancelEditEmp) btnCancelEditEmp.addEventListener('click', closeEditEmployeeModal);
+
+    if (btnEditGenPass) {
+      btnEditGenPass.addEventListener('click', () => {
+        const passInput = document.getElementById('edit-emp-password');
+        if (passInput) {
+          const randomNum = Math.floor(1000 + Math.random() * 9000);
+          passInput.value = `Algorisys@${randomNum}`;
+          passInput.type = 'text';
+          const mustChangeEl = document.getElementById('edit-emp-must-change');
+          if (mustChangeEl) mustChangeEl.checked = true;
+        }
+      });
+    }
+
+    if (formAdminEditEmp) {
+      formAdminEditEmp.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errEl = document.getElementById('admin-edit-error');
+        if (errEl) errEl.textContent = '';
+
+        const id = document.getElementById('edit-emp-id')?.value;
+        const fullName = document.getElementById('edit-emp-name')?.value.trim();
+        const email = document.getElementById('edit-emp-email')?.value.trim();
+        const department = document.getElementById('edit-emp-dept')?.value.trim();
+        const designation = document.getElementById('edit-emp-designation')?.value.trim() || 'Team Member';
+        const role = document.getElementById('edit-emp-role')?.value || 'EMPLOYEE';
+        const active = document.getElementById('edit-emp-status')?.value === '1';
+        const password = document.getElementById('edit-emp-password')?.value;
+        const mustChangePassword = document.getElementById('edit-emp-must-change')?.checked;
+
+        const submitBtn = document.getElementById('btn-submit-edit-emp');
+        const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+
+        try {
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>Saving...</span><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+          }
+
+          const data = await api(`/admin/users/${id}`, {
+            method: 'PUT',
+            body: { fullName, email, department, designation, role, active, password, mustChangePassword },
+          });
+
+          showToast(data.message || `Employee "${fullName}" updated!`, 'success');
+          closeEditEmployeeModal();
+          refreshAdminUsers();
+          refreshAdminSummary();
+          loadUsersIntoAllotDropdown();
+          loadColleaguesDatalist();
+        } catch (err) {
+          if (errEl) errEl.textContent = err.message;
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
+            if (window.lucide) window.lucide.createIcons();
+          }
+        }
+      });
+    }
   }
 
   function updateAdminHallPreview() {
@@ -1705,6 +1776,14 @@
           const actionWrap = document.createElement('div');
           actionWrap.className = 'inline-flex items-center gap-1.5 justify-end';
 
+          // Edit Employee Details button
+          const editBtn = document.createElement('button');
+          editBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-md transition cursor-pointer shadow-2xs';
+          editBtn.innerHTML = `<i data-lucide="pencil" class="w-3 h-3"></i><span>Edit</span>`;
+          editBtn.title = 'Edit employee profile, designation, or reset password';
+          editBtn.addEventListener('click', () => openEditEmployeeModal(u));
+          actionWrap.appendChild(editBtn);
+
           // Role toggle button (Admin can allot role to any user)
           const roleBtn = document.createElement('button');
           if (u.role === 'ADMIN') {
@@ -1739,7 +1818,22 @@
 
           actionTd.appendChild(actionWrap);
         } else {
-          actionTd.innerHTML = '<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">(current account)</span>';
+          const selfWrap = document.createElement('div');
+          selfWrap.className = 'inline-flex items-center gap-1.5 justify-end';
+
+          const editSelfBtn = document.createElement('button');
+          editSelfBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-md transition cursor-pointer shadow-2xs';
+          editSelfBtn.innerHTML = `<i data-lucide="pencil" class="w-3 h-3"></i><span>Edit</span>`;
+          editSelfBtn.title = 'Edit your profile details or password';
+          editSelfBtn.addEventListener('click', () => openEditEmployeeModal(u));
+          selfWrap.appendChild(editSelfBtn);
+
+          const selfBadge = document.createElement('span');
+          selfBadge.className = 'text-[11px] font-semibold text-slate-400 uppercase tracking-wider ml-1';
+          selfBadge.textContent = '(You)';
+          selfWrap.appendChild(selfBadge);
+
+          actionTd.appendChild(selfWrap);
         }
         tbody.appendChild(tr);
       });
@@ -1747,6 +1841,41 @@
     } catch (err) {
       showToast(err.message, 'error');
     }
+  }
+
+  function openEditEmployeeModal(user) {
+    const modalEditEmp = document.getElementById('modal-edit-employee');
+    if (!modalEditEmp || !user) return;
+    const errEl = document.getElementById('admin-edit-error');
+    if (errEl) errEl.textContent = '';
+
+    document.getElementById('edit-emp-id').value = user.id || '';
+    document.getElementById('edit-emp-name').value = user.fullName || '';
+    document.getElementById('edit-emp-email').value = user.email || '';
+    document.getElementById('edit-emp-dept').value = user.department || '';
+    document.getElementById('edit-emp-designation').value = user.designation || '';
+    document.getElementById('edit-emp-role').value = user.role || 'EMPLOYEE';
+    document.getElementById('edit-emp-status').value = user.active ? '1' : '0';
+    document.getElementById('edit-emp-password').value = '';
+    document.getElementById('edit-emp-must-change').checked = Boolean(user.mustChangePassword);
+
+    const isSelf = currentUser && currentUser.id === user.id;
+    const roleSelect = document.getElementById('edit-emp-role');
+    const statusSelect = document.getElementById('edit-emp-status');
+    if (roleSelect) roleSelect.disabled = isSelf;
+    if (statusSelect) statusSelect.disabled = isSelf;
+
+    modalEditEmp.classList.remove('hidden');
+    modalEditEmp.classList.add('flex');
+    if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
+    document.getElementById('edit-emp-name')?.focus();
+  }
+
+  function closeEditEmployeeModal() {
+    const modalEditEmp = document.getElementById('modal-edit-employee');
+    if (!modalEditEmp) return;
+    modalEditEmp.classList.add('hidden');
+    modalEditEmp.classList.remove('flex');
   }
 
   async function changeUserRole(userId, newRole) {

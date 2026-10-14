@@ -399,6 +399,137 @@ router.post('/users', (req, res) => {
 });
 
 // ---------------------------------------------------------------
+// PUT /api/admin/users/:id  (and POST /api/admin/users/:id/edit)
+// Edit employee details (name, email, department, designation, role, status, and optional password)
+// ---------------------------------------------------------------
+function handleEditUser(req, res) {
+  try {
+    const targetId = Number(req.params.id);
+    if (!targetId || isNaN(targetId)) {
+      return res.status(400).json({ error: 'Invalid employee ID.' });
+    }
+
+    const target = db.prepare('SELECT * FROM users WHERE id = ?').get(targetId);
+    if (!target) {
+      return res.status(404).json({ error: 'Employee not found.' });
+    }
+
+    const { fullName, email, department, designation, role, active, password, mustChangePassword } = req.body || {};
+
+    // 1. Validate full name
+    const cleanFullName = String(fullName || '').trim();
+    if (!cleanFullName) {
+      return res.status(400).json({ error: 'Please enter employee full name.' });
+    }
+
+    // 2. Validate email
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      return res.status(400).json({ error: 'Please enter company email.' });
+    }
+    if (!cleanEmail.endsWith('@algorisys.com')) {
+      return res.status(400).json({ error: 'Employee email must end with @algorisys.com' });
+    }
+
+    // Check if new email is already taken by another user
+    const emailConflict = db.prepare('SELECT id FROM users WHERE LOWER(email) = ? AND id != ?').get(cleanEmail, targetId);
+    if (emailConflict) {
+      return res.status(409).json({ error: `An account with email ${cleanEmail} already exists for another user.` });
+    }
+
+    // 3. Validate department
+    const cleanDept = String(department || '').trim();
+    if (!cleanDept) {
+      return res.status(400).json({ error: 'Please enter department.' });
+    }
+
+    const cleanDesignation = String(designation || '').trim();
+
+    // 4. Validate role
+    let newRole = target.role;
+    if (role !== undefined) {
+      newRole = String(role).toUpperCase().trim();
+      if (!['ADMIN', 'EMPLOYEE'].includes(newRole)) {
+        return res.status(400).json({ error: 'Role must be either ADMIN or EMPLOYEE.' });
+      }
+      if (targetId === req.user.id && newRole !== 'ADMIN') {
+        return res.status(400).json({ error: 'You cannot remove your own Admin rights.' });
+      }
+      if (target.role === 'ADMIN' && newRole === 'EMPLOYEE') {
+        const otherAdmins = db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'ADMIN' AND id != ?").get(targetId).c;
+        if (otherAdmins === 0) {
+          return res.status(400).json({ error: 'Cannot demote this user because they are the only remaining Administrator.' });
+        }
+      }
+    }
+
+    // 5. Validate active status
+    let newActive = target.active;
+    if (active !== undefined) {
+      newActive = active ? 1 : 0;
+      if (targetId === req.user.id && newActive === 0) {
+        return res.status(400).json({ error: 'You cannot deactivate your own account.' });
+      }
+      if (target.role === 'ADMIN' && newActive === 0) {
+        const otherActiveAdmins = db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'ADMIN' AND active = 1 AND id != ?").get(targetId).c;
+        if (otherActiveAdmins === 0) {
+          return res.status(400).json({ error: 'Cannot deactivate this user because they are the only active Administrator.' });
+        }
+      }
+    }
+
+    // 6. Handle optional password update
+    let newPasswordHash = target.password_hash;
+    let newMustChange = target.must_change_password;
+
+    if (password && String(password).trim().length > 0) {
+      const cleanPassword = String(password).trim();
+      if (cleanPassword.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+      }
+      newPasswordHash = bcrypt.hashSync(cleanPassword, 10);
+      newMustChange = mustChangePassword !== undefined ? (mustChangePassword ? 1 : 0) : 1;
+    } else if (mustChangePassword !== undefined) {
+      newMustChange = mustChangePassword ? 1 : 0;
+    }
+
+    // 7. Update user record in database
+    db.prepare(`
+      UPDATE users 
+      SET full_name = ?, email = ?, department = ?, designation = ?, role = ?, active = ?, password_hash = ?, must_change_password = ?
+      WHERE id = ?
+    `).run(cleanFullName, cleanEmail, cleanDept, cleanDesignation, newRole, newActive, newPasswordHash, newMustChange, targetId);
+
+    const updatedUser = db.prepare(`
+      SELECT id, full_name, email, department, designation, role, active, must_change_password, created_at
+      FROM users WHERE id = ?
+    `).get(targetId);
+
+    return res.json({
+      message: `Employee "${cleanFullName}" details updated successfully.`,
+      user: {
+        id: updatedUser.id,
+        fullName: updatedUser.full_name,
+        email: updatedUser.email,
+        department: updatedUser.department,
+        designation: updatedUser.designation,
+        role: updatedUser.role,
+        active: Boolean(updatedUser.active),
+        mustChangePassword: Boolean(updatedUser.must_change_password),
+        createdAt: updatedUser.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('Error updating employee details:', err);
+    return res.status(500).json({ error: 'Failed to update employee details.' });
+  }
+}
+
+router.put('/users/:id', handleEditUser);
+router.post('/users/:id/edit', handleEditUser);
+router.post('/users/:id/update', handleEditUser);
+
+// ---------------------------------------------------------------
 // POST /api/admin/users/:id/toggle  (activate/deactivate)
 // ---------------------------------------------------------------
 router.post('/users/:id/toggle', (req, res) => {
