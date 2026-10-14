@@ -1354,8 +1354,8 @@
       return;
     }
     if (!hallId) {
-      errEl.textContent = 'Please select a conference hall.';
-      document.getElementById('book-hall')?.focus();
+      errEl.textContent = 'Please choose a conference hall from Step 1 above.';
+      document.getElementById('visual-room-cards')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
     if (!startTime) {
@@ -1927,26 +1927,13 @@
       if (title) title.textContent = 'Board Room';
       if (cap) cap.textContent = '10 Seats';
       if (desc) desc.textContent = 'Executive Suite · Leadership & Board Meetings';
-      if (chips) {
-        chips.innerHTML = `
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">4K Dual Video Wall</span>
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Polycom VC</span>
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Conference Mic Array</span>
-        `;
-      }
     } else {
       if (img) img.src = '/images/small-conference-room.jpg';
       if (title) title.textContent = 'Small Conference Room';
       if (cap) cap.textContent = '6 Seats';
       if (desc) desc.textContent = 'Collaboration Hub · 1-on-1s & Team Syncs';
-      if (chips) {
-        chips.innerHTML = `
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Interactive Whiteboard</span>
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Hybrid VC</span>
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200">Gigabit Wi-Fi</span>
-        `;
-      }
     }
+    if (chips) chips.innerHTML = '';
     if (window.lucide) window.lucide.createIcons();
   }
 
