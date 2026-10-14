@@ -638,53 +638,25 @@
       document.getElementById('purpose-count').textContent = purposeEl.value.length;
     });
 
-    // Attendee Dropdown Selection from Database
-    const bookSelect = document.getElementById('book-employee-select');
-    if (bookSelect) {
-      bookSelect.addEventListener('change', () => {
-        if (bookSelect.value === '__ALL__') {
-          selectAllAttendees('book');
-          bookSelect.value = '';
-        } else if (bookSelect.value) {
-          addAttendee('book', bookSelect.value);
-          bookSelect.value = '';
-        }
-      });
-    }
-
-    const bookFilter = document.getElementById('book-employee-filter');
-    if (bookFilter) {
-      bookFilter.addEventListener('input', () => {
-        filterEmployeeDropdown('book-employee-select', bookFilter.value);
-      });
-      bookFilter.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const select = document.getElementById('book-employee-select');
-          if (select) {
-            const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
-            if (firstVisible && firstVisible.value) {
-              if (firstVisible.value === '__ALL__') {
-                selectAllAttendees('book');
-              } else {
-                addAttendee('book', firstVisible.value);
-              }
-              bookFilter.value = '';
-              filterEmployeeDropdown('book-employee-select', '');
-            }
-          }
-        }
-      });
-    }
+    // Setup Attendee Autocomplete & Quick Actions (Select All, Clear)
+    setupAttendeeAutocomplete('book');
 
     const bookSelectAllBtn = document.getElementById('book-select-all-btn');
     if (bookSelectAllBtn) {
-      bookSelectAllBtn.addEventListener('click', () => selectAllAttendees('book'));
+      bookSelectAllBtn.addEventListener('click', () => {
+        selectAllAttendees('book');
+        const container = document.getElementById('book-attendee-suggestions');
+        if (container) container.classList.add('hidden');
+      });
     }
 
     const bookClearBtn = document.getElementById('book-clear-attendees-btn');
     if (bookClearBtn) {
-      bookClearBtn.addEventListener('click', () => clearAttendees('book'));
+      bookClearBtn.addEventListener('click', () => {
+        clearAttendees('book');
+        const container = document.getElementById('book-attendee-suggestions');
+        if (container) container.classList.add('hidden');
+      });
     }
 
     // Live conflict checks as user selects hall, start time, end time
@@ -774,14 +746,12 @@
   // Currently selected attendees for admin room allotment
   let allotSelectedAttendees = [];
 
-  // Fetches active employees from database and populates dropdowns
+  // Fetches active employees from database
   async function loadColleagues() {
     try {
       const data = await api('/colleagues');
       if (data && Array.isArray(data.colleagues)) {
         cachedColleagues = data.colleagues;
-        populateEmployeeDropdown('book-employee-select', cachedColleagues);
-        populateEmployeeDropdown('allot-colleague-select', cachedColleagues);
 
         // Also populate datalist if it exists for backwards-compatibility
         const list = document.getElementById('colleagues-list');
@@ -803,67 +773,205 @@
     return loadColleagues();
   }
 
-  function populateEmployeeDropdown(selectId, colleaguesList) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
+  // Returns database colleagues available for selection (filtering out booker and already selected)
+  function getAvailableColleagues(type, filterQuery = '') {
+    const query = (filterQuery || '').toLowerCase().trim();
+    const selectedList = type === 'book' ? bookSelectedAttendees : allotSelectedAttendees;
+    const selectedIds = new Set(selectedList.map((c) => c.id));
 
-    select.innerHTML = '';
+    let organizerId = null;
+    let organizerEmail = '';
+    if (type === 'book') {
+      organizerId = currentUser ? currentUser.id : null;
+      organizerEmail = currentUser && currentUser.email ? currentUser.email.toLowerCase().trim() : '';
+    } else {
+      const allotUserSelect = document.getElementById('allot-user');
+      organizerId = allotUserSelect ? Number(allotUserSelect.value) : 0;
+    }
 
-    const defaultOpt = document.createElement('option');
-    defaultOpt.value = '';
-    defaultOpt.textContent = '-- Choose employee from database to add --';
-    select.appendChild(defaultOpt);
+    return cachedColleagues.filter((c) => {
+      // Exclude organizer
+      if (organizerId && c.id === organizerId) return false;
+      if (organizerEmail && (c.email || '').toLowerCase().trim() === organizerEmail) return false;
+      // Exclude already selected attendees
+      if (selectedIds.has(c.id)) return false;
 
-    const selectAllOpt = document.createElement('option');
-    selectAllOpt.value = '__ALL__';
-    selectAllOpt.textContent = '👥 Select All Attendees';
-    selectAllOpt.className = 'font-semibold text-blue-700 bg-blue-50';
-    select.appendChild(selectAllOpt);
-
-    const isBook = selectId === 'book-employee-select';
-    const bookerId = isBook && currentUser ? currentUser.id : null;
-    const bookerEmail = isBook && currentUser ? (currentUser.email || '').toLowerCase().trim() : '';
-
-    const allotUserSelect = document.getElementById('allot-user');
-    const assignedUserId = !isBook && allotUserSelect ? Number(allotUserSelect.value) : 0;
-
-    colleaguesList.forEach((c) => {
-      // Exclude the person booking the meeting (he is the organizer)
-      if (bookerId && c.id === bookerId) return;
-      if (bookerEmail && (c.email || '').toLowerCase().trim() === bookerEmail) return;
-      if (assignedUserId && c.id === assignedUserId) return;
-
-      const opt = document.createElement('option');
-      opt.value = String(c.id);
-      opt.textContent = c.name;
-      opt.dataset.name = c.name;
-      opt.dataset.email = c.email;
-      opt.dataset.department = c.department || '';
-      select.appendChild(opt);
+      if (!query) return true;
+      const nameMatch = (c.name || '').toLowerCase().includes(query);
+      const deptMatch = (c.department || '').toLowerCase().includes(query);
+      return nameMatch || deptMatch;
     });
   }
 
-  function filterEmployeeDropdown(selectId, filterText) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-    const term = (filterText || '').toLowerCase().trim();
+  // Renders autocomplete suggestion list under attendee input
+  function renderAttendeeSuggestions(type, filterQuery = '') {
+    const isBook = type === 'book';
+    const container = document.getElementById(isBook ? 'book-attendee-suggestions' : 'allot-attendee-suggestions');
+    if (!container) return;
 
-    Array.from(select.options).forEach((opt, idx) => {
-      if (idx === 0) {
-        opt.hidden = false;
-        return;
-      }
-      if (opt.value === '__ALL__') {
-        opt.hidden = Boolean(term && term.length > 2 && !'select all attendees'.includes(term));
-        return;
-      }
-      if (!term) {
-        opt.hidden = false;
+    const matches = getAvailableColleagues(type, filterQuery);
+    const query = (filterQuery || '').trim();
+
+    if (matches.length === 0) {
+      if (query) {
+        container.innerHTML = `
+          <div class="px-3.5 py-3 text-center text-xs text-slate-500 italic">
+            No registered employee matching "<span class="font-medium text-slate-700">${escapeHtml(query)}</span>" in database
+          </div>`;
+        container.classList.remove('hidden');
       } else {
-        const text = (opt.textContent || '').toLowerCase();
-        opt.hidden = !text.includes(term);
+        const selectedList = isBook ? bookSelectedAttendees : allotSelectedAttendees;
+        if (selectedList.length > 0) {
+          container.innerHTML = `
+            <div class="px-3.5 py-2.5 text-center text-xs text-emerald-700 font-medium bg-emerald-50/50">
+              ✓ All database colleagues added
+            </div>`;
+          container.classList.remove('hidden');
+        } else {
+          container.classList.add('hidden');
+        }
+      }
+      return;
+    }
+
+    container.innerHTML = matches.slice(0, 30).map((c, idx) => `
+      <div class="attendee-suggestion-item px-3.5 py-2 hover:bg-blue-50/80 cursor-pointer flex items-center justify-between transition group ${idx === 0 ? 'bg-slate-50/50' : ''}" data-emp-id="${c.id}">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-7 h-7 rounded-full ${isBook ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'} flex items-center justify-center font-bold text-xs shrink-0">
+            ${escapeHtml((c.name || 'E').charAt(0).toUpperCase())}
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-blue-700 truncate">${escapeHtml(c.name)}</div>
+            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(c.department || 'General')}</div>
+          </div>
+        </div>
+        <span class="text-xs ${isBook ? 'text-blue-600' : 'text-slate-700'} font-semibold group-hover:underline shrink-0 ml-2">
+          + Select
+        </span>
+      </div>
+    `).join('');
+
+    container.classList.remove('hidden');
+
+    // Attach click listeners to each suggestion
+    container.querySelectorAll('.attendee-suggestion-item').forEach((item) => {
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevents input blur before click finishes
+        const empId = Number(item.dataset.empId);
+        if (empId) {
+          addAttendee(type, empId);
+          const input = document.getElementById(isBook ? 'book-attendee-input' : 'allot-attendee-input');
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+          container.classList.add('hidden');
+        }
+      });
+    });
+  }
+
+  // Sets up input listeners, keyboard arrows/enter, and outside-click dismiss
+  function setupAttendeeAutocomplete(type) {
+    const isBook = type === 'book';
+    const input = document.getElementById(isBook ? 'book-attendee-input' : 'allot-attendee-input');
+    const container = document.getElementById(isBook ? 'book-attendee-suggestions' : 'allot-attendee-suggestions');
+    if (!input || !container) return;
+
+    let activeIndex = -1;
+
+    function updateActiveHighlight(items) {
+      items.forEach((item, idx) => {
+        if (idx === activeIndex) {
+          item.classList.add('bg-blue-100/70', 'ring-1', 'ring-blue-300');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('bg-blue-100/70', 'ring-1', 'ring-blue-300');
+        }
+      });
+    }
+
+    input.addEventListener('focus', () => {
+      activeIndex = -1;
+      renderAttendeeSuggestions(type, input.value);
+    });
+
+    input.addEventListener('input', () => {
+      activeIndex = -1;
+      renderAttendeeSuggestions(type, input.value);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      const items = Array.from(container.querySelectorAll('.attendee-suggestion-item'));
+      const isVisible = !container.classList.contains('hidden');
+
+      if (e.key === 'ArrowDown' && isVisible && items.length > 0) {
+        e.preventDefault();
+        activeIndex = (activeIndex + 1) % items.length;
+        updateActiveHighlight(items);
+        return;
+      }
+
+      if (e.key === 'ArrowUp' && isVisible && items.length > 0) {
+        e.preventDefault();
+        activeIndex = (activeIndex - 1 + items.length) % items.length;
+        updateActiveHighlight(items);
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isVisible && activeIndex >= 0 && items[activeIndex]) {
+          const empId = Number(items[activeIndex].dataset.empId);
+          if (empId) {
+            addAttendee(type, empId);
+            input.value = '';
+            container.classList.add('hidden');
+            activeIndex = -1;
+          }
+          return;
+        }
+
+        // If not navigating with arrows, check if typed text matches any database employee
+        const val = input.value.trim().toLowerCase();
+        if (val) {
+          const matches = getAvailableColleagues(type, val);
+          if (matches.length > 0) {
+            // Prefer exact match, or first partial match
+            const exact = matches.find((m) => m.name.toLowerCase() === val);
+            const chosen = exact || matches[0];
+            addAttendee(type, chosen.id);
+            input.value = '';
+            container.classList.add('hidden');
+            activeIndex = -1;
+          } else {
+            showToast(`Employee "${input.value}" not found in database.`, 'warning');
+          }
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        container.classList.add('hidden');
+        activeIndex = -1;
       }
     });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !container.contains(e.target)) {
+        container.classList.add('hidden');
+        activeIndex = -1;
+      }
+    });
+  }
+
+  function populateEmployeeDropdown(selectId, colleaguesList) {
+    // Safe no-op for backward compatibility
+  }
+
+  function filterEmployeeDropdown(selectId, filterText) {
+    // Safe no-op for backward compatibility
   }
 
   function renderSelectedAttendees(type) {
@@ -877,7 +985,7 @@
     if (!container) return;
 
     if (list.length === 0) {
-      container.innerHTML = `<span class="text-xs text-slate-400 italic" id="${isBook ? 'book-no-attendees-hint' : 'allot-no-attendees-hint'}">No employees selected yet. Pick from the dropdown above.</span>`;
+      container.innerHTML = `<span class="text-xs text-slate-400 italic" id="${isBook ? 'book-no-attendees-hint' : 'allot-no-attendees-hint'}">No employees selected yet. Type name above or click Select all.</span>`;
       if (badge) badge.textContent = '0 selected';
       if (hiddenInput) hiddenInput.value = '';
       if (countInput) countInput.value = '1';
@@ -1043,13 +1151,10 @@
     if (endInput) endInput.value = '';
 
     clearAttendees('book');
-    const bookFilter = document.getElementById('book-employee-filter');
-    if (bookFilter) {
-      bookFilter.value = '';
-      filterEmployeeDropdown('book-employee-select', '');
-    }
-    const bookSelect = document.getElementById('book-employee-select');
-    if (bookSelect) bookSelect.value = '';
+    const bookInput = document.getElementById('book-attendee-input');
+    if (bookInput) bookInput.value = '';
+    const bookSuggestions = document.getElementById('book-attendee-suggestions');
+    if (bookSuggestions) bookSuggestions.classList.add('hidden');
 
     const purposeInput = document.getElementById('book-purpose');
     if (purposeInput) purposeInput.value = '';
@@ -1387,8 +1492,8 @@
       return;
     }
     if (!participants || !participants.trim()) {
-      errEl.textContent = 'Please select at least one employee from the registered employees dropdown.';
-      document.getElementById('book-employee-select')?.focus();
+      errEl.textContent = 'Please select at least one employee from the database.';
+      document.getElementById('book-attendee-input')?.focus();
       return;
     }
     if (!purpose || !purpose.trim()) {
@@ -1679,53 +1784,25 @@
       btnAllotSubmit.addEventListener('click', handleAdminAllotSubmit);
     }
 
-    // Admin Allot Attendee Dropdown Selection from Database
-    const allotSelect = document.getElementById('allot-colleague-select');
-    if (allotSelect) {
-      allotSelect.addEventListener('change', () => {
-        if (allotSelect.value === '__ALL__') {
-          selectAllAttendees('allot');
-          allotSelect.value = '';
-        } else if (allotSelect.value) {
-          addAttendee('allot', allotSelect.value);
-          allotSelect.value = '';
-        }
-      });
-    }
-
-    const allotFilter = document.getElementById('allot-employee-filter');
-    if (allotFilter) {
-      allotFilter.addEventListener('input', () => {
-        filterEmployeeDropdown('allot-colleague-select', allotFilter.value);
-      });
-      allotFilter.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const select = document.getElementById('allot-colleague-select');
-          if (select) {
-            const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
-            if (firstVisible && firstVisible.value) {
-              if (firstVisible.value === '__ALL__') {
-                selectAllAttendees('allot');
-              } else {
-                addAttendee('allot', firstVisible.value);
-              }
-              allotFilter.value = '';
-              filterEmployeeDropdown('allot-colleague-select', '');
-            }
-          }
-        }
-      });
-    }
+    // Admin Allot Attendee Selection from Database
+    setupAttendeeAutocomplete('allot');
 
     const allotSelectAllBtn = document.getElementById('allot-select-all-btn');
     if (allotSelectAllBtn) {
-      allotSelectAllBtn.addEventListener('click', () => selectAllAttendees('allot'));
+      allotSelectAllBtn.addEventListener('click', () => {
+        selectAllAttendees('allot');
+        const container = document.getElementById('allot-attendee-suggestions');
+        if (container) container.classList.add('hidden');
+      });
     }
 
     const allotClearBtn = document.getElementById('allot-clear-attendees-btn');
     if (allotClearBtn) {
-      allotClearBtn.addEventListener('click', () => clearAttendees('allot'));
+      allotClearBtn.addEventListener('click', () => {
+        clearAttendees('allot');
+        const container = document.getElementById('allot-attendee-suggestions');
+        if (container) container.classList.add('hidden');
+      });
     }
 
     const allotUserSelect = document.getElementById('allot-user');
@@ -1736,7 +1813,11 @@
           // Exclude the person booking the meeting from attendees
           allotSelectedAttendees = allotSelectedAttendees.filter((c) => c.id !== bookerId);
           renderSelectedAttendees('allot');
-          populateEmployeeDropdown('allot-colleague-select', cachedColleagues);
+          const container = document.getElementById('allot-attendee-suggestions');
+          if (container && !container.classList.contains('hidden')) {
+            const input = document.getElementById('allot-attendee-input');
+            renderAttendeeSuggestions('allot', input ? input.value : '');
+          }
         }
       });
     }
@@ -2026,8 +2107,8 @@
       return;
     }
     if (!participants || !participants.trim()) {
-      errEl.textContent = 'Please select at least one employee from the registered employees dropdown.';
-      document.getElementById('allot-colleague-select')?.focus();
+      errEl.textContent = 'Please select at least one employee from the database.';
+      document.getElementById('allot-attendee-input')?.focus();
       return;
     }
     if (!purpose || !purpose.trim()) {
@@ -2064,13 +2145,10 @@
       document.getElementById('allot-end').value = '';
       document.getElementById('allot-purpose').value = '';
       clearAttendees('allot');
-      const allotFilter = document.getElementById('allot-employee-filter');
-      if (allotFilter) {
-        allotFilter.value = '';
-        filterEmployeeDropdown('allot-colleague-select', '');
-      }
-      const allotSelect = document.getElementById('allot-colleague-select');
-      if (allotSelect) allotSelect.value = '';
+      const allotInput = document.getElementById('allot-attendee-input');
+      if (allotInput) allotInput.value = '';
+      const allotSuggestions = document.getElementById('allot-attendee-suggestions');
+      if (allotSuggestions) allotSuggestions.classList.add('hidden');
       const allotErr = document.getElementById('allot-error');
       if (allotErr) allotErr.textContent = '';
       
