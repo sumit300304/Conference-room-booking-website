@@ -2,13 +2,14 @@
 // app opens instantly, while all /api/ calls always go to the network
 // (booking data must never be served stale).
 
-const CACHE_NAME = 'algorisys-booking-shell-v18';
+const CACHE_NAME = 'algorisys-booking-shell-v19';
 const SHELL_FILES = [
   '/',
   '/index.html',
   '/style.css',
   '/app.js',
   '/manifest.json',
+  '/images/auth-conference-bg.jpg',
   '/images/conference-hero.jpg',
   '/images/board-room.jpg',
   '/images/small-conference-room.jpg',

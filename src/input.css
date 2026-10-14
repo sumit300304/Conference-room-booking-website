@@ -58,9 +58,10 @@
 
 /* Executive Conference Hero Background */
 .bg-portal-hero {
+  background-color: #070b19;
   background-image: 
-    linear-gradient(to top, rgba(7, 11, 25, 0.95) 0%, rgba(11, 19, 41, 0.84) 45%, rgba(15, 23, 42, 0.68) 100%), 
-    url('/images/conference-hero.jpg');
+    linear-gradient(180deg, rgba(13, 20, 38, 0.82) 0%, rgba(10, 16, 32, 0.88) 45%, rgba(6, 10, 22, 0.96) 100%), 
+    url('/images/auth-conference-bg.jpg');
   background-size: cover;
   background-position: center;
 }
