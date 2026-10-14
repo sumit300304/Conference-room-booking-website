@@ -95,16 +95,27 @@ async function sendBookingConfirmationEmail({
     console.log(`====================================================`);
     console.log(`[DEV NOTIFICATION - BOOKER CONFIRMATION]`);
     console.log(`To: ${fullName} <${toEmail}>`);
-    console.log(`Booking ID: ${bookingCode} | Hall: ${hallName} | Date: ${date} | Time: ${startTime} – ${endTime} IST`);
-    console.log(`Attendees: ${attendees}${participantText} | Purpose: ${purpose}`);
+    console.log(`Booking ID: ${bookingCode} | Hall: ${hallName}`);
+    console.log(`Date: ${date} | Time: ${startTime} – ${endTime} IST`);
+    console.log(`Attendees: ${attendees}${participantText}`);
+    console.log(`Agenda: ${purpose}`);
+    if (Array.isArray(attendeeList) && attendeeList.length > 0) {
+      console.log(`Invited Attendees (${attendeeList.length}): ${attendeeList.map((a) => `${a.name} <${a.email}>`).join(', ')}`);
+    }
     console.log(`====================================================`);
   } else {
     try {
+      const attendeeListHtml = Array.isArray(attendeeList) && attendeeList.length > 0
+        ? `<div style="margin-top: 14px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 13px; color: #166534;">
+             <strong>✓ Attendee Invitations Sent:</strong> ${attendeeList.map((a) => `${a.name} (${a.email})`).join(', ')}
+           </div>`
+        : '';
+
       await t.sendMail({
         from,
         to: toEmail,
-        subject: `Booking Confirmed: ${hallName} on ${date} (${startTime} – ${endTime} IST)`,
-        text: `Hello ${fullName},\n\nYour conference room booking has been confirmed.\n\nBooking ID: ${bookingCode}\nHall: ${hallName}\nDate: ${date}\nTime: ${startTime} – ${endTime} IST\nMembers: ${attendees}${participantText}\nPurpose: ${purpose}\n\nThank you,\nAlgorisys Conference Hall Booking System`,
+        subject: `Booking Confirmed: ${hallName} on ${date} (${startTime} – ${endTime} IST) [${bookingCode}]`,
+        text: `Hello ${fullName},\n\nYour conference room booking has been confirmed.\n\nBooking ID: ${bookingCode}\nConference Hall: ${hallName}\nDate: ${date}\nTime: ${startTime} – ${endTime} IST\nAttendees: ${attendees}${participantText}\nAgenda: ${purpose}\n\n${attendeeList.length > 0 ? `Attendee invitations have been dispatched to:\n${attendeeList.map((a) => `- ${a.name} (${a.email})`).join('\n')}\n\n` : ''}Thank you,\nAlgorisys Conference Hall Booking System`,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; background: #ffffff;">
             <div style="background-color: #090e1a; color: #ffffff; padding: 24px; border-bottom: 2px solid #2563eb;">
@@ -113,16 +124,17 @@ async function sendBookingConfirmationEmail({
             </div>
             <div style="padding: 24px;">
               <p style="margin-top: 0; font-size: 15px;">Hello <strong>${fullName}</strong>,</p>
-              <p style="font-size: 14px; color: #334155; line-height: 1.5;">Your conference room reservation has been confirmed in the system. Details are provided below:</p>
+              <p style="font-size: 14px; color: #334155; line-height: 1.5;">Your conference room reservation has been confirmed in the system. Full meeting details are provided below:</p>
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 20px 0;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                  <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Booking Pass ID:</td><td style="padding: 8px 0; font-weight: 700; color: #2563eb; font-family: monospace; font-size: 15px;">${bookingCode}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Booking ID:</td><td style="padding: 8px 0; font-weight: 700; color: #2563eb; font-family: monospace; font-size: 15px;">${bookingCode}</td></tr>
                   <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Conference Hall:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${hallName}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Date:</td><td style="padding: 8px 0; font-weight: 600; color: #0f172a;">${date}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Time Window:</td><td style="padding: 8px 0; font-weight: 700; color: #0284c7;">${startTime} – ${endTime} IST</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Date:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${date}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Time:</td><td style="padding: 8px 0; font-weight: 700; color: #0284c7;">${startTime} – ${endTime} IST</td></tr>
                   <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Attendees:</td><td style="padding: 8px 0; color: #334155;"><strong>${attendees}</strong> member(s)${participantText}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Agenda / Purpose:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 500;">${purpose}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Agenda:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${purpose}</td></tr>
                 </table>
+                ${attendeeListHtml}
               </div>
               <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">If your meeting concludes early, you can release the room from "My Bookings" to free it up for colleagues.</p>
             </div>
@@ -134,7 +146,7 @@ async function sendBookingConfirmationEmail({
     }
   }
 
-  // 2. Email to each attendee / participant
+  // 2. Email to each attendee / participant (sent to their registered email address)
   if (Array.isArray(attendeeList) && attendeeList.length > 0) {
     for (const att of attendeeList) {
       const attEmail = (att.email || '').trim().toLowerCase();
@@ -146,15 +158,19 @@ async function sendBookingConfirmationEmail({
         console.log(`[DEV NOTIFICATION - ATTENDEE INVITATION]`);
         console.log(`To: ${attName} <${attEmail}>`);
         console.log(`Subject: Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST)`);
-        console.log(`Organized by: ${fullName} | Purpose: ${purpose}`);
+        console.log(`Date: ${date} | Time: ${startTime} – ${endTime} IST | Hall: ${hallName}`);
+        console.log(`Organized by: ${fullName} (${toEmail})`);
+        console.log(`Attendees: ${participants || attendees}`);
+        console.log(`Agenda: ${purpose}`);
+        console.log(`Booking ID: ${bookingCode}`);
         console.log(`----------------------------------------------------`);
       } else {
         try {
           await t.sendMail({
             from,
             to: attEmail,
-            subject: `Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST)`,
-            text: `Hello ${attName},\n\nYou have been invited to a meeting in ${hallName} scheduled by ${fullName}.\n\nBooking ID: ${bookingCode}\nDate: ${date}\nTime: ${startTime} – ${endTime} IST\nLocation: ${hallName}\nAttendees: ${participants || attendees}\nMeeting Purpose: ${purpose}\n\nAlgorisys Conference Suite`,
+            subject: `Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST) [Scheduled by ${fullName}]`,
+            text: `Hello ${attName},\n\nYou have been invited as an attendee to an upcoming meeting scheduled by ${fullName}.\n\nMeeting Details:\n- Date: ${date}\n- Time: ${startTime} – ${endTime} IST\n- Conference Hall: ${hallName}\n- Agenda: ${purpose}\n- Attendees: ${participants || attendees}\n- Organized By: ${fullName} (${toEmail})\n- Booking ID: ${bookingCode}\n\nPlease be present at ${hallName} on time.\n\nThank you,\nAlgorisys Conference Suite`,
             html: `
               <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; background: #ffffff;">
                 <div style="background-color: #090e1a; color: #ffffff; padding: 24px; border-bottom: 2px solid #10b981;">
@@ -163,16 +179,16 @@ async function sendBookingConfirmationEmail({
                 </div>
                 <div style="padding: 24px;">
                   <p style="margin-top: 0; font-size: 15px;">Hello <strong>${attName}</strong>,</p>
-                  <p style="font-size: 14px; color: #334155; line-height: 1.5;"><strong>${fullName}</strong> has scheduled a conference session and included you as an attendee:</p>
+                  <p style="font-size: 14px; color: #334155; line-height: 1.5;"><strong>${fullName}</strong> (${toEmail}) has scheduled a conference session and included you as an attendee. Please find the meeting details below:</p>
                   <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 20px 0;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                      <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Location:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${hallName}</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Date:</td><td style="padding: 8px 0; font-weight: 600; color: #0f172a;">${date}</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Time Slot:</td><td style="padding: 8px 0; font-weight: 700; color: #059669;">${startTime} – ${endTime} IST</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Organizer:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${fullName} (${toEmail})</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Purpose / Agenda:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 500;">${purpose}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; width: 130px; font-weight: 500;">Meeting Date:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${date}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Meeting Time:</td><td style="padding: 8px 0; font-weight: 700; color: #059669;">${startTime} – ${endTime} IST</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Conference Hall:</td><td style="padding: 8px 0; font-weight: 700; color: #0f172a;">${hallName}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Meeting Agenda:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${purpose}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Organized By:</td><td style="padding: 8px 0; color: #2563eb; font-weight: 600;">${fullName} (${toEmail})</td></tr>
                       <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">All Attendees:</td><td style="padding: 8px 0; color: #334155; font-size: 13px;">${participants || attendees}</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Pass Ref:</td><td style="padding: 8px 0; color: #64748b; font-family: monospace; font-size: 12px;">${bookingCode}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; font-weight: 500;">Booking ID:</td><td style="padding: 8px 0; color: #64748b; font-family: monospace; font-size: 13px;">${bookingCode}</td></tr>
                     </table>
                   </div>
                   <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">Please be present at ${hallName} on time. Thank you!</p>

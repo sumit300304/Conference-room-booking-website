@@ -623,10 +623,14 @@
       if (data && data.colleagues) {
         list.innerHTML = '';
         data.colleagues.forEach((c) => {
-          const opt = document.createElement('option');
-          opt.value = c.name;
-          opt.label = `${c.name} (${c.email})`;
-          list.appendChild(opt);
+          const optWithEmail = document.createElement('option');
+          optWithEmail.value = `${c.name} (${c.email})`;
+          list.appendChild(optWithEmail);
+
+          const optNameOnly = document.createElement('option');
+          optNameOnly.value = c.name;
+          optNameOnly.label = c.email;
+          list.appendChild(optNameOnly);
         });
       }
     } catch (e) {
