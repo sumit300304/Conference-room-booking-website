@@ -71,6 +71,8 @@
   function showOnly(view) {
     [viewAuth, viewEmployee, viewAdmin].forEach((v) => v.classList.add('hidden'));
     view.classList.remove('hidden');
+    document.documentElement.classList.remove('preload-employee', 'preload-admin');
+    document.documentElement.removeAttribute('data-preload-panel');
     if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
   }
 
@@ -378,12 +380,47 @@
   }
 
   // =================================================================
-  // ROUTING (after login / on load)
+  // ROUTING & PERSISTENCE (after login / on refresh)
   // =================================================================
+  const PANEL_HASH_MAP = {
+    'panel-book': '#book',
+    'panel-schedule': '#schedule',
+    'panel-mine': '#mine',
+    'panel-admin-overview': '#overview',
+    'panel-admin-bookings': '#bookings',
+    'panel-admin-allot': '#allot',
+    'panel-admin-users': '#employees',
+  };
+
+  const HASH_PANEL_MAP = {
+    '#book': 'panel-book',
+    '#schedule': 'panel-schedule',
+    '#mine': 'panel-mine',
+    '#my-bookings': 'panel-mine',
+    '#overview': 'panel-admin-overview',
+    '#bookings': 'panel-admin-bookings',
+    '#all-bookings': 'panel-admin-bookings',
+    '#allot': 'panel-admin-allot',
+    '#users': 'panel-admin-users',
+    '#employees': 'panel-admin-users',
+  };
+
   let currentUser = null;
 
   function routeUser(user) {
     currentUser = user;
+
+    // Cache user credentials and identity to prevent refresh flash
+    try {
+      localStorage.setItem('algorisys_user_role', user.role);
+      sessionStorage.setItem('algorisys_user_role', user.role);
+      localStorage.setItem('algorisys_user_info', JSON.stringify({
+        fullName: user.fullName,
+        department: user.department,
+        role: user.role
+      }));
+    } catch (e) {}
+
     const btnGotoAdmin = document.getElementById('btn-goto-admin');
     if (btnGotoAdmin) {
       if (user.role === 'ADMIN') {
@@ -393,9 +430,18 @@
       }
     }
 
+    const currentHash = (window.location.hash || '').toLowerCase();
+    const savedConsole = localStorage.getItem('algorisys_active_console') || sessionStorage.getItem('algorisys_active_console');
+
     if (user.role === 'ADMIN') {
-      initAdminView(user);
-      showOnly(viewAdmin);
+      // If admin was specifically viewing employee console or hash points to an employee panel
+      if (savedConsole === 'employee' || ['#book', '#schedule', '#mine', '#my-bookings'].includes(currentHash)) {
+        initEmployeeView(user);
+        showOnly(viewEmployee);
+      } else {
+        initAdminView(user);
+        showOnly(viewAdmin);
+      }
     } else {
       initEmployeeView(user);
       showOnly(viewEmployee);
@@ -415,6 +461,10 @@
     if (btnGotoAdmin) {
       btnGotoAdmin.addEventListener('click', () => {
         if (!currentUser || currentUser.role !== 'ADMIN') return;
+        try {
+          localStorage.setItem('algorisys_active_console', 'admin');
+          sessionStorage.setItem('algorisys_active_console', 'admin');
+        } catch (e) {}
         initAdminView(currentUser);
         showOnly(viewAdmin);
       });
@@ -424,15 +474,59 @@
     if (btnGotoEmployee) {
       btnGotoEmployee.addEventListener('click', () => {
         if (!currentUser) return;
+        try {
+          localStorage.setItem('algorisys_active_console', 'employee');
+          sessionStorage.setItem('algorisys_active_console', 'employee');
+        } catch (e) {}
         initEmployeeView(currentUser);
         showOnly(viewEmployee);
       });
     }
 
+    // Browser back/forward button hash support
+    window.addEventListener('hashchange', () => {
+      if (!currentUser) return;
+      const hash = (window.location.hash || '').toLowerCase();
+      const panelId = HASH_PANEL_MAP[hash];
+      if (!panelId) return;
+      if (panelId.startsWith('panel-admin') && currentUser.role === 'ADMIN') {
+        if (viewAdmin.classList.contains('hidden')) {
+          showOnly(viewAdmin);
+        }
+        switchPanel(viewAdmin, panelId, false);
+      } else if (['panel-book', 'panel-schedule', 'panel-mine'].includes(panelId)) {
+        if (viewEmployee.classList.contains('hidden')) {
+          showOnly(viewEmployee);
+        }
+        switchPanel(viewEmployee, panelId, false);
+        if (panelId === 'panel-book') {
+          const curDate = document.getElementById('book-date')?.value || kolkataNowStrings().date;
+          loadRoomOccupancy(curDate);
+        } else if (panelId === 'panel-schedule') {
+          const tgtDate = document.getElementById('sched-date-picker')?.value || kolkataNowStrings().date;
+          refreshSchedule(tgtDate);
+        } else if (panelId === 'panel-mine') {
+          refreshMyBookings();
+        }
+      }
+    });
+
     try {
       const data = await api('/me');
       routeUser(data.user);
     } catch (e) {
+      try {
+        localStorage.removeItem('algorisys_user_role');
+        localStorage.removeItem('algorisys_active_console');
+        localStorage.removeItem('algorisys_active_panel');
+        localStorage.removeItem('algorisys_user_info');
+        sessionStorage.removeItem('algorisys_user_role');
+        sessionStorage.removeItem('algorisys_active_console');
+        sessionStorage.removeItem('algorisys_active_panel');
+        sessionStorage.removeItem('algorisys_user_info');
+        document.documentElement.classList.remove('has-session', 'preload-employee', 'preload-admin');
+        document.documentElement.removeAttribute('data-preload-panel');
+      } catch (err) {}
       showOnly(viewAuth);
       showAuthForm('login');
     }
@@ -478,14 +572,31 @@
       });
     }
 
-    switchPanel(viewEmployee, 'panel-book');
+    // Determine target panel (honor URL hash, then stored preference, defaulting to panel-book)
+    const currentHash = (window.location.hash || '').toLowerCase();
+    const savedPanel = HASH_PANEL_MAP[currentHash]
+      || localStorage.getItem('algorisys_active_panel')
+      || sessionStorage.getItem('algorisys_active_panel')
+      || 'panel-book';
+
+    const validEmployeePanels = ['panel-book', 'panel-schedule', 'panel-mine'];
+    const targetPanel = validEmployeePanels.includes(savedPanel) ? savedPanel : 'panel-book';
+
+    switchPanel(viewEmployee, targetPanel, false);
     loadHallsInto('book-hall', false, '-- Select Conference Hall --').then(() => {
       syncRoomCards();
       loadRoomOccupancy(bookDateInput ? bookDateInput.value || today : today);
     });
     loadColleaguesDatalist();
-    refreshSchedule(today);
-    refreshMyBookings();
+
+    if (targetPanel === 'panel-schedule') {
+      refreshSchedule(today);
+    } else if (targetPanel === 'panel-mine') {
+      refreshMyBookings();
+    } else {
+      refreshSchedule(today);
+      refreshMyBookings();
+    }
 
     if (employeeInitialized) return;
     employeeInitialized = true;
@@ -596,12 +707,33 @@
     }
   }
 
-  function switchPanel(scope, panelId) {
+  function switchPanel(scope, panelId, updateHistory = true) {
     if (!scope) return;
     scope.querySelectorAll('.panel').forEach((p) => p.classList.add('hidden'));
     scope.querySelectorAll('.tabbar-btn').forEach((b) => b.classList.toggle('active', b.dataset.panel === panelId));
     const target = document.getElementById(panelId);
     if (target) target.classList.remove('hidden');
+
+    try {
+      localStorage.setItem('algorisys_active_panel', panelId);
+      sessionStorage.setItem('algorisys_active_panel', panelId);
+      if (scope === viewAdmin) {
+        localStorage.setItem('algorisys_active_console', 'admin');
+        sessionStorage.setItem('algorisys_active_console', 'admin');
+      } else if (scope === viewEmployee) {
+        localStorage.setItem('algorisys_active_console', 'employee');
+        sessionStorage.setItem('algorisys_active_console', 'employee');
+      }
+    } catch (e) {}
+
+    if (updateHistory && PANEL_HASH_MAP[panelId]) {
+      try {
+        if (window.location.hash !== PANEL_HASH_MAP[panelId]) {
+          history.replaceState(null, '', PANEL_HASH_MAP[panelId]);
+        }
+      } catch (e) {}
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.lucide) setTimeout(() => window.lucide.createIcons(), 10);
   }
@@ -1489,14 +1621,31 @@
       if (!allotDateInput.value) allotDateInput.value = today;
     }
 
-    switchPanel(viewAdmin, 'panel-admin-overview');
-    refreshAdminSummary();
+    const currentHash = (window.location.hash || '').toLowerCase();
+    const savedPanel = HASH_PANEL_MAP[currentHash]
+      || localStorage.getItem('algorisys_active_panel')
+      || sessionStorage.getItem('algorisys_active_panel')
+      || 'panel-admin-overview';
+
+    const validAdminPanels = ['panel-admin-overview', 'panel-admin-bookings', 'panel-admin-allot', 'panel-admin-users'];
+    const targetPanel = validAdminPanels.includes(savedPanel) ? savedPanel : 'panel-admin-overview';
+
+    switchPanel(viewAdmin, targetPanel, false);
+    if (targetPanel === 'panel-admin-overview') refreshAdminSummary();
+    if (targetPanel === 'panel-admin-bookings') refreshAdminBookings();
+    if (targetPanel === 'panel-admin-users') refreshAdminUsers();
+    if (targetPanel === 'panel-admin-allot') {
+      loadUsersIntoAllotDropdown();
+      loadHallsInto('allot-hall', false, '-- Select Conference Hall --');
+    }
+
     loadHallsInto('filter-hall', true);
     loadHallsInto('allot-hall', false, '-- Select Conference Hall --');
     loadUsersIntoAllotDropdown();
     loadColleaguesDatalist();
-    refreshAdminBookings();
-    refreshAdminUsers();
+    if (targetPanel !== 'panel-admin-overview') refreshAdminSummary();
+    if (targetPanel !== 'panel-admin-bookings') refreshAdminBookings();
+    if (targetPanel !== 'panel-admin-users') refreshAdminUsers();
 
     if (adminInitialized) return;
     adminInitialized = true;
@@ -2230,6 +2379,19 @@
     currentUser = null;
     employeeInitialized = false;
     adminInitialized = false;
+    try {
+      localStorage.removeItem('algorisys_user_role');
+      localStorage.removeItem('algorisys_active_console');
+      localStorage.removeItem('algorisys_active_panel');
+      localStorage.removeItem('algorisys_user_info');
+      sessionStorage.removeItem('algorisys_user_role');
+      sessionStorage.removeItem('algorisys_active_console');
+      sessionStorage.removeItem('algorisys_active_panel');
+      sessionStorage.removeItem('algorisys_user_info');
+      document.documentElement.classList.remove('has-session', 'preload-employee', 'preload-admin');
+      document.documentElement.removeAttribute('data-preload-panel');
+    } catch (e) {}
+    window.location.hash = '';
     window.location.reload();
   }
 

@@ -27,6 +27,108 @@
 
   <!-- Compiled Tailwind CSS v4 -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Pre-render session state check to prevent login page flash on refresh -->
+  <style id="fouc-prevention">
+    html.has-session #view-auth {
+      display: none !important;
+    }
+    html.preload-employee #view-employee {
+      display: flex !important;
+    }
+    html.preload-admin #view-admin {
+      display: flex !important;
+    }
+
+    /* Keep correct active panel displayed during pre-render */
+    html[data-preload-panel="panel-schedule"] #panel-book { display: none !important; }
+    html[data-preload-panel="panel-schedule"] #panel-schedule { display: block !important; }
+    html[data-preload-panel="panel-schedule"] .tabbar-btn[data-panel="panel-book"] { color: #475569 !important; background-color: transparent !important; box-shadow: none !important; }
+    html[data-preload-panel="panel-schedule"] .tabbar-btn[data-panel="panel-schedule"] { color: #fff !important; background-color: #0f172a !important; font-weight: 600 !important; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.2) !important; }
+
+    html[data-preload-panel="panel-mine"] #panel-book { display: none !important; }
+    html[data-preload-panel="panel-mine"] #panel-mine { display: block !important; }
+    html[data-preload-panel="panel-mine"] .tabbar-btn[data-panel="panel-book"] { color: #475569 !important; background-color: transparent !important; box-shadow: none !important; }
+    html[data-preload-panel="panel-mine"] .tabbar-btn[data-panel="panel-mine"] { color: #fff !important; background-color: #0f172a !important; font-weight: 600 !important; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.2) !important; }
+
+    html[data-preload-panel="panel-admin-bookings"] #panel-admin-overview { display: none !important; }
+    html[data-preload-panel="panel-admin-bookings"] #panel-admin-bookings { display: block !important; }
+    html[data-preload-panel="panel-admin-bookings"] #view-admin .tabbar-btn[data-panel="panel-admin-overview"] { color: #475569 !important; background-color: transparent !important; box-shadow: none !important; }
+    html[data-preload-panel="panel-admin-bookings"] #view-admin .tabbar-btn[data-panel="panel-admin-bookings"] { color: #fff !important; background-color: #0f172a !important; font-weight: 600 !important; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.2) !important; }
+
+    html[data-preload-panel="panel-admin-allot"] #panel-admin-overview { display: none !important; }
+    html[data-preload-panel="panel-admin-allot"] #panel-admin-allot { display: block !important; }
+    html[data-preload-panel="panel-admin-allot"] #view-admin .tabbar-btn[data-panel="panel-admin-overview"] { color: #475569 !important; background-color: transparent !important; box-shadow: none !important; }
+    html[data-preload-panel="panel-admin-allot"] #view-admin .tabbar-btn[data-panel="panel-admin-allot"] { color: #fff !important; background-color: #0f172a !important; font-weight: 600 !important; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.2) !important; }
+
+    html[data-preload-panel="panel-admin-users"] #panel-admin-overview { display: none !important; }
+    html[data-preload-panel="panel-admin-users"] #panel-admin-users { display: block !important; }
+    html[data-preload-panel="panel-admin-users"] #view-admin .tabbar-btn[data-panel="panel-admin-overview"] { color: #475569 !important; background-color: transparent !important; box-shadow: none !important; }
+    html[data-preload-panel="panel-admin-users"] #view-admin .tabbar-btn[data-panel="panel-admin-users"] { color: #fff !important; background-color: #0f172a !important; font-weight: 600 !important; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.2) !important; }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var role = localStorage.getItem('algorisys_user_role') || sessionStorage.getItem('algorisys_user_role');
+        var activeConsole = localStorage.getItem('algorisys_active_console') || sessionStorage.getItem('algorisys_active_console');
+        var panel = localStorage.getItem('algorisys_active_panel') || sessionStorage.getItem('algorisys_active_panel');
+
+        var hash = (window.location.hash || '').toLowerCase();
+        var hashToPanel = {
+          '#book': 'panel-book',
+          '#schedule': 'panel-schedule',
+          '#mine': 'panel-mine',
+          '#my-bookings': 'panel-mine',
+          '#overview': 'panel-admin-overview',
+          '#bookings': 'panel-admin-bookings',
+          '#all-bookings': 'panel-admin-bookings',
+          '#allot': 'panel-admin-allot',
+          '#users': 'panel-admin-users',
+          '#employees': 'panel-admin-users'
+        };
+        if (hashToPanel[hash]) {
+          panel = hashToPanel[hash];
+          if (panel.startsWith('panel-admin')) {
+            activeConsole = 'admin';
+          } else {
+            activeConsole = 'employee';
+          }
+        }
+
+        if (role) {
+          var root = document.documentElement;
+          root.classList.add('has-session');
+          if (role === 'ADMIN' && activeConsole === 'admin') {
+            root.classList.add('preload-admin');
+          } else {
+            root.classList.add('preload-employee');
+          }
+          if (panel) {
+            root.setAttribute('data-preload-panel', panel);
+          }
+        }
+
+        // Fast pre-fill user info on DOMContentLoaded
+        window.addEventListener('DOMContentLoaded', function () {
+          try {
+            var raw = localStorage.getItem('algorisys_user_info');
+            if (raw) {
+              var info = JSON.parse(raw);
+              var empWho = document.getElementById('emp-who');
+              if (empWho && info.fullName) {
+                empWho.textContent = info.fullName + ' · ' + (info.department || 'Employee');
+              }
+              var adminWho = document.getElementById('admin-who');
+              if (adminWho && info.fullName && info.role === 'ADMIN') {
+                adminWho.textContent = info.fullName + ' · Admin Console';
+              }
+            }
+          } catch (e) {}
+        });
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body
