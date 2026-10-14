@@ -657,7 +657,7 @@
           list.innerHTML = '';
           cachedColleagues.forEach((c) => {
             const opt = document.createElement('option');
-            opt.value = `${c.name} (${c.email})`;
+            opt.value = c.name;
             list.appendChild(opt);
           });
         }
@@ -684,7 +684,7 @@
 
     const selectAllOpt = document.createElement('option');
     selectAllOpt.value = '__ALL__';
-    selectAllOpt.textContent = '👥 Select All Attendees (All other colleagues)';
+    selectAllOpt.textContent = '👥 Select All Attendees';
     selectAllOpt.className = 'font-semibold text-blue-700 bg-blue-50';
     select.appendChild(selectAllOpt);
 
@@ -703,7 +703,7 @@
 
       const opt = document.createElement('option');
       opt.value = String(c.id);
-      opt.textContent = `${c.name} (${c.department || 'General'} · ${c.email})`;
+      opt.textContent = c.name;
       opt.dataset.name = c.name;
       opt.dataset.email = c.email;
       opt.dataset.department = c.department || '';
