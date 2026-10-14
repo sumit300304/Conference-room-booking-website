@@ -985,13 +985,15 @@
     if (!container) return;
 
     if (list.length === 0) {
-      container.innerHTML = `<span class="text-xs text-slate-400 italic" id="${isBook ? 'book-no-attendees-hint' : 'allot-no-attendees-hint'}">No employees selected yet. Type name above or click Select all.</span>`;
-      if (badge) badge.textContent = '0 selected';
+      container.innerHTML = '';
+      container.classList.add('hidden');
+      if (badge) badge.textContent = '';
       if (hiddenInput) hiddenInput.value = '';
       if (countInput) countInput.value = '1';
       return;
     }
 
+    container.classList.remove('hidden');
     if (badge) badge.textContent = `${list.length} selected`;
     if (hiddenInput) hiddenInput.value = list.map((c) => c.name).join(', ');
     if (countInput) countInput.value = String(Math.max(1, list.length));
