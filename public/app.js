@@ -531,7 +531,10 @@
     const bookSelect = document.getElementById('book-employee-select');
     if (bookSelect) {
       bookSelect.addEventListener('change', () => {
-        if (bookSelect.value) {
+        if (bookSelect.value === '__ALL__') {
+          selectAllAttendees('book');
+          bookSelect.value = '';
+        } else if (bookSelect.value) {
           addAttendee('book', bookSelect.value);
           bookSelect.value = '';
         }
@@ -550,7 +553,11 @@
           if (select) {
             const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
             if (firstVisible && firstVisible.value) {
-              addAttendee('book', firstVisible.value);
+              if (firstVisible.value === '__ALL__') {
+                selectAllAttendees('book');
+              } else {
+                addAttendee('book', firstVisible.value);
+              }
               bookFilter.value = '';
               filterEmployeeDropdown('book-employee-select', '');
             }
@@ -668,9 +675,32 @@
     const select = document.getElementById(selectId);
     if (!select) return;
 
-    select.innerHTML = '<option value="">-- Choose employee from database to add --</option>';
+    select.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Choose employee from database to add --';
+    select.appendChild(defaultOpt);
+
+    const selectAllOpt = document.createElement('option');
+    selectAllOpt.value = '__ALL__';
+    selectAllOpt.textContent = '👥 Select All Attendees (All other colleagues)';
+    selectAllOpt.className = 'font-semibold text-blue-700 bg-blue-50';
+    select.appendChild(selectAllOpt);
+
+    const isBook = selectId === 'book-employee-select';
+    const bookerId = isBook && currentUser ? currentUser.id : null;
+    const bookerEmail = isBook && currentUser ? (currentUser.email || '').toLowerCase().trim() : '';
+
+    const allotUserSelect = document.getElementById('allot-user');
+    const assignedUserId = !isBook && allotUserSelect ? Number(allotUserSelect.value) : 0;
 
     colleaguesList.forEach((c) => {
+      // Exclude the person booking the meeting (he is the organizer)
+      if (bookerId && c.id === bookerId) return;
+      if (bookerEmail && (c.email || '').toLowerCase().trim() === bookerEmail) return;
+      if (assignedUserId && c.id === assignedUserId) return;
+
       const opt = document.createElement('option');
       opt.value = String(c.id);
       opt.textContent = `${c.name} (${c.department || 'General'} · ${c.email})`;
@@ -689,6 +719,10 @@
     Array.from(select.options).forEach((opt, idx) => {
       if (idx === 0) {
         opt.hidden = false;
+        return;
+      }
+      if (opt.value === '__ALL__') {
+        opt.hidden = Boolean(term && term.length > 2 && !'select all attendees'.includes(term));
         return;
       }
       if (!term) {
@@ -758,6 +792,21 @@
     const emp = cachedColleagues.find((c) => String(c.id) === String(empId));
     if (!emp) return;
 
+    // Prevent adding the person booking the meeting as an attendee
+    if (type === 'book' && currentUser && (emp.id === currentUser.id || (emp.email || '').toLowerCase() === (currentUser.email || '').toLowerCase())) {
+      showToast('You are the organizer booking this meeting and cannot be added as an attendee.', 'info');
+      return;
+    }
+
+    if (type === 'allot') {
+      const allotUserSelect = document.getElementById('allot-user');
+      const assignedUserId = allotUserSelect ? Number(allotUserSelect.value) : 0;
+      if (assignedUserId && emp.id === assignedUserId) {
+        showToast('This employee is the assigned organizer booking this meeting.', 'info');
+        return;
+      }
+    }
+
     if (!list.some((item) => item.id === emp.id)) {
       list.push(emp);
       renderSelectedAttendees(type);
@@ -775,9 +824,24 @@
 
   function selectAllAttendees(type) {
     if (type === 'book') {
-      bookSelectedAttendees = [...cachedColleagues];
+      const bookerId = currentUser ? currentUser.id : null;
+      const bookerEmail = currentUser ? (currentUser.email || '').toLowerCase().trim() : '';
+
+      // Select all colleagues EXCEPT the person booking the meeting
+      bookSelectedAttendees = cachedColleagues.filter((c) => {
+        if (bookerId && c.id === bookerId) return false;
+        if (bookerEmail && (c.email || '').toLowerCase().trim() === bookerEmail) return false;
+        return true;
+      });
     } else {
-      allotSelectedAttendees = [...cachedColleagues];
+      const allotUserSelect = document.getElementById('allot-user');
+      const assignedUserId = allotUserSelect ? Number(allotUserSelect.value) : 0;
+
+      // Select all colleagues EXCEPT the employee booking the meeting
+      allotSelectedAttendees = cachedColleagues.filter((c) => {
+        if (assignedUserId && c.id === assignedUserId) return false;
+        return true;
+      });
     }
     renderSelectedAttendees(type);
   }
@@ -1470,7 +1534,10 @@
     const allotSelect = document.getElementById('allot-colleague-select');
     if (allotSelect) {
       allotSelect.addEventListener('change', () => {
-        if (allotSelect.value) {
+        if (allotSelect.value === '__ALL__') {
+          selectAllAttendees('allot');
+          allotSelect.value = '';
+        } else if (allotSelect.value) {
           addAttendee('allot', allotSelect.value);
           allotSelect.value = '';
         }
@@ -1489,7 +1556,11 @@
           if (select) {
             const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
             if (firstVisible && firstVisible.value) {
-              addAttendee('allot', firstVisible.value);
+              if (firstVisible.value === '__ALL__') {
+                selectAllAttendees('allot');
+              } else {
+                addAttendee('allot', firstVisible.value);
+              }
               allotFilter.value = '';
               filterEmployeeDropdown('allot-colleague-select', '');
             }
@@ -1511,8 +1582,12 @@
     const allotUserSelect = document.getElementById('allot-user');
     if (allotUserSelect) {
       allotUserSelect.addEventListener('change', () => {
-        if (allotUserSelect.value) {
-          addAttendee('allot', allotUserSelect.value);
+        const bookerId = Number(allotUserSelect.value);
+        if (bookerId) {
+          // Exclude the person booking the meeting from attendees
+          allotSelectedAttendees = allotSelectedAttendees.filter((c) => c.id !== bookerId);
+          renderSelectedAttendees('allot');
+          populateEmployeeDropdown('allot-colleague-select', cachedColleagues);
         }
       });
     }
