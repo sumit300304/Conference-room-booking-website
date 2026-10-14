@@ -111,7 +111,7 @@ async function sendBookingConfirmationEmail({
            </div>`
         : '';
 
-      await t.sendMail({
+      const info = await t.sendMail({
         from,
         to: toEmail,
         subject: `Booking Confirmed: ${hallName} on ${date} (${startTime} – ${endTime} IST) [${bookingCode}]`,
@@ -141,6 +141,8 @@ async function sendBookingConfirmationEmail({
           </div>
         `,
       });
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log(`[BOOKER EMAIL DISPATCHED] To: ${fullName} <${toEmail}> | Message ID: ${info.messageId}${previewUrl ? ` | Preview: ${previewUrl}` : ''}`);
     } catch (err) {
       console.error('Failed to send booker confirmation email:', err.message);
     }
@@ -166,7 +168,7 @@ async function sendBookingConfirmationEmail({
         console.log(`----------------------------------------------------`);
       } else {
         try {
-          await t.sendMail({
+          const info = await t.sendMail({
             from,
             to: attEmail,
             subject: `Meeting Invitation: ${hallName} on ${date} (${startTime} – ${endTime} IST) [Scheduled by ${fullName}]`,
@@ -196,6 +198,8 @@ async function sendBookingConfirmationEmail({
               </div>
             `,
           });
+          const previewUrl = nodemailer.getTestMessageUrl(info);
+          console.log(`[ATTENDEE EMAIL DISPATCHED] To: ${attName} <${attEmail}> | Message ID: ${info.messageId}${previewUrl ? ` | Preview: ${previewUrl}` : ''}`);
         } catch (err) {
           console.error(`Failed to send attendee email to ${attEmail}:`, err.message);
         }

@@ -339,8 +339,9 @@ router.post('/users', (req, res) => {
     if (!department) return res.status(400).json({ error: 'Department is required.' });
     if (!designation) designation = 'Team Member';
     if (!email) return res.status(400).json({ error: 'Company email is required.' });
-    if (!email.endsWith('@algorisys.com')) {
-      return res.status(400).json({ error: 'Only @algorisys.com email addresses are allowed.' });
+    const allowAnyEmail = process.env.ALLOW_ANY_EMAIL === 'true' || process.env.NODE_ENV !== 'production';
+    if (!allowAnyEmail && !email.endsWith('@algorisys.com')) {
+      return res.status(400).json({ error: 'Only @algorisys.com email addresses are allowed in production.' });
     }
     if (!password || password.length < 8) {
       return res.status(400).json({ error: 'Initial temporary password must be at least 8 characters long.' });
@@ -427,8 +428,9 @@ function handleEditUser(req, res) {
     if (!cleanEmail) {
       return res.status(400).json({ error: 'Please enter company email.' });
     }
-    if (!cleanEmail.endsWith('@algorisys.com')) {
-      return res.status(400).json({ error: 'Employee email must end with @algorisys.com' });
+    const allowAnyEmailEdit = process.env.ALLOW_ANY_EMAIL === 'true' || process.env.NODE_ENV !== 'production';
+    if (!allowAnyEmailEdit && !cleanEmail.endsWith('@algorisys.com')) {
+      return res.status(400).json({ error: 'Employee email must end with @algorisys.com in production.' });
     }
 
     // Check if new email is already taken by another user
