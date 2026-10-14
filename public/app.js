@@ -490,28 +490,7 @@
     if (employeeInitialized) return;
     employeeInitialized = true;
 
-    // Synchronize Visual Room Selection Cards with the select element
-    function syncRoomCards() {
-      const hallSelect = document.getElementById('book-hall');
-      if (!hallSelect) return;
-      const currentHallId = String(hallSelect.value || '');
-      document.querySelectorAll('.room-select-card').forEach((card) => {
-        const cardHallId = String(card.dataset.hallId);
-        const isSelected = Boolean(currentHallId) && cardHallId === currentHallId;
-        card.classList.toggle('selected', isSelected);
-        const indicator = card.querySelector('.room-active-indicator');
-        if (indicator) {
-          if (isSelected) {
-            indicator.classList.remove('hidden');
-            indicator.classList.add('inline-flex');
-          } else {
-            indicator.classList.add('hidden');
-            indicator.classList.remove('inline-flex');
-          }
-        }
-      });
-      updateRoomOccupancySummary();
-    }
+    // Visual cards are synchronized via syncRoomCards() in module scope
 
     // Attach click listeners to visual room selection cards
     document.querySelectorAll('.room-select-card').forEach((card) => {
@@ -656,6 +635,60 @@
     }
     const purpose = (document.getElementById('book-purpose')?.value || '').trim();
     return { date, hallId, startTime, endTime, attendees, participants, purpose };
+  }
+
+  // Synchronize Visual Room Selection Cards with the select element (module scope)
+  function syncRoomCards() {
+    const hallSelect = document.getElementById('book-hall');
+    if (!hallSelect) return;
+    const currentHallId = String(hallSelect.value || '');
+    document.querySelectorAll('.room-select-card').forEach((card) => {
+      const cardHallId = String(card.dataset.hallId);
+      const isSelected = Boolean(currentHallId) && cardHallId === currentHallId;
+      card.classList.toggle('selected', isSelected);
+      const indicator = card.querySelector('.room-active-indicator');
+      if (indicator) {
+        if (isSelected) {
+          indicator.classList.remove('hidden');
+          indicator.classList.add('inline-flex');
+        } else {
+          indicator.classList.add('hidden');
+          indicator.classList.remove('inline-flex');
+        }
+      }
+    });
+    updateRoomOccupancySummary();
+  }
+
+  // Completely resets/clears all booking form inputs, attendee counts, and errors
+  function resetBookingForm() {
+    const hallSelect = document.getElementById('book-hall');
+    if (hallSelect) hallSelect.value = '';
+    syncRoomCards();
+
+    const startInput = document.getElementById('book-start');
+    if (startInput) startInput.value = '';
+
+    const endInput = document.getElementById('book-end');
+    if (endInput) endInput.value = '';
+
+    const partInput = document.getElementById('book-participants');
+    if (partInput) partInput.value = '';
+
+    const attInput = document.getElementById('book-attendees');
+    if (attInput) attInput.value = '1';
+
+    const purposeInput = document.getElementById('book-purpose');
+    if (purposeInput) purposeInput.value = '';
+
+    const purposeCount = document.getElementById('purpose-count');
+    if (purposeCount) purposeCount.textContent = '0';
+
+    const warningBox = document.getElementById('live-slot-warning');
+    if (warningBox) warningBox.classList.add('hidden');
+
+    const errEl = document.getElementById('book-error');
+    if (errEl) errEl.textContent = '';
   }
 
   // Live occupancy state cache for instant conflict checking
@@ -1012,16 +1045,8 @@
         purpose,
       });
 
-      document.getElementById('book-hall').value = '';
-      syncRoomCards();
-      document.getElementById('book-purpose').value = '';
-      document.getElementById('purpose-count').textContent = '0';
-      document.getElementById('book-start').value = '';
-      document.getElementById('book-end').value = '';
-      const partEl = document.getElementById('book-participants');
-      if (partEl) partEl.value = '';
-      const warningBox = document.getElementById('live-slot-warning');
-      if (warningBox) warningBox.classList.add('hidden');
+      // Clear the booking form / feed completely
+      resetBookingForm();
       
       // Instantly refresh the room occupancy cards for this date
       loadRoomOccupancy(date);
@@ -1540,6 +1565,10 @@
       document.getElementById('allot-purpose').value = '';
       const allotPart = document.getElementById('allot-participants');
       if (allotPart) allotPart.value = '';
+      const allotAtt = document.getElementById('allot-attendees');
+      if (allotAtt) allotAtt.value = '1';
+      const allotErr = document.getElementById('allot-error');
+      if (allotErr) allotErr.textContent = '';
       
       // Switch back to All Bookings view
       refreshAdminBookings();
