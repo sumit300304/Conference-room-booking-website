@@ -527,14 +527,46 @@
       document.getElementById('purpose-count').textContent = purposeEl.value.length;
     });
 
-    const bookParticipantsInput = document.getElementById('book-participants');
-    if (bookParticipantsInput) {
-      bookParticipantsInput.addEventListener('input', () => {
-        const names = bookParticipantsInput.value.split(',').map((s) => s.trim()).filter(Boolean);
-        if (names.length > 0) {
-          document.getElementById('book-attendees').value = names.length;
+    // Attendee Dropdown Selection from Database
+    const bookSelect = document.getElementById('book-employee-select');
+    if (bookSelect) {
+      bookSelect.addEventListener('change', () => {
+        if (bookSelect.value) {
+          addAttendee('book', bookSelect.value);
+          bookSelect.value = '';
         }
       });
+    }
+
+    const bookFilter = document.getElementById('book-employee-filter');
+    if (bookFilter) {
+      bookFilter.addEventListener('input', () => {
+        filterEmployeeDropdown('book-employee-select', bookFilter.value);
+      });
+      bookFilter.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const select = document.getElementById('book-employee-select');
+          if (select) {
+            const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
+            if (firstVisible && firstVisible.value) {
+              addAttendee('book', firstVisible.value);
+              bookFilter.value = '';
+              filterEmployeeDropdown('book-employee-select', '');
+            }
+          }
+        }
+      });
+    }
+
+    const bookSelectAllBtn = document.getElementById('book-select-all-btn');
+    if (bookSelectAllBtn) {
+      bookSelectAllBtn.addEventListener('click', () => selectAllAttendees('book'));
+    }
+
+    const bookClearBtn = document.getElementById('book-clear-attendees-btn');
+    if (bookClearBtn) {
+      bookClearBtn.addEventListener('click', () => clearAttendees('book'));
     }
 
     // Live conflict checks as user selects hall, start time, end time
@@ -594,27 +626,169 @@
     }
   }
 
-  async function loadColleaguesDatalist() {
-    const list = document.getElementById('colleagues-list');
-    if (!list) return;
+  // Cached database active colleagues
+  let cachedColleagues = [];
+
+  // Currently selected attendees for employee booking
+  let bookSelectedAttendees = [];
+
+  // Currently selected attendees for admin room allotment
+  let allotSelectedAttendees = [];
+
+  // Fetches active employees from database and populates dropdowns
+  async function loadColleagues() {
     try {
       const data = await api('/colleagues');
-      if (data && data.colleagues) {
-        list.innerHTML = '';
-        data.colleagues.forEach((c) => {
-          const optWithEmail = document.createElement('option');
-          optWithEmail.value = `${c.name} (${c.email})`;
-          list.appendChild(optWithEmail);
+      if (data && Array.isArray(data.colleagues)) {
+        cachedColleagues = data.colleagues;
+        populateEmployeeDropdown('book-employee-select', cachedColleagues);
+        populateEmployeeDropdown('allot-colleague-select', cachedColleagues);
 
-          const optNameOnly = document.createElement('option');
-          optNameOnly.value = c.name;
-          optNameOnly.label = c.email;
-          list.appendChild(optNameOnly);
-        });
+        // Also populate datalist if it exists for backwards-compatibility
+        const list = document.getElementById('colleagues-list');
+        if (list) {
+          list.innerHTML = '';
+          cachedColleagues.forEach((c) => {
+            const opt = document.createElement('option');
+            opt.value = `${c.name} (${c.email})`;
+            list.appendChild(opt);
+          });
+        }
       }
     } catch (e) {
-      /* ignore */
+      console.warn('Could not load registered employees:', e.message);
     }
+  }
+
+  function loadColleaguesDatalist() {
+    return loadColleagues();
+  }
+
+  function populateEmployeeDropdown(selectId, colleaguesList) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Choose employee from database to add --</option>';
+
+    colleaguesList.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      opt.textContent = `${c.name} (${c.department || 'General'} · ${c.email})`;
+      opt.dataset.name = c.name;
+      opt.dataset.email = c.email;
+      opt.dataset.department = c.department || '';
+      select.appendChild(opt);
+    });
+  }
+
+  function filterEmployeeDropdown(selectId, filterText) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const term = (filterText || '').toLowerCase().trim();
+
+    Array.from(select.options).forEach((opt, idx) => {
+      if (idx === 0) {
+        opt.hidden = false;
+        return;
+      }
+      if (!term) {
+        opt.hidden = false;
+      } else {
+        const text = (opt.textContent || '').toLowerCase();
+        opt.hidden = !text.includes(term);
+      }
+    });
+  }
+
+  function renderSelectedAttendees(type) {
+    const isBook = type === 'book';
+    const list = isBook ? bookSelectedAttendees : allotSelectedAttendees;
+    const container = document.getElementById(isBook ? 'book-selected-attendees-list' : 'allot-selected-attendees-list');
+    const badge = document.getElementById(isBook ? 'book-attendees-counter-badge' : 'allot-attendees-counter-badge');
+    const hiddenInput = document.getElementById(isBook ? 'book-participants' : 'allot-participants');
+    const countInput = document.getElementById(isBook ? 'book-attendees' : 'allot-attendees');
+
+    if (!container) return;
+
+    if (list.length === 0) {
+      container.innerHTML = `<span class="text-xs text-slate-400 italic" id="${isBook ? 'book-no-attendees-hint' : 'allot-no-attendees-hint'}">No employees selected yet. Pick from the dropdown above.</span>`;
+      if (badge) badge.textContent = '0 selected';
+      if (hiddenInput) hiddenInput.value = '';
+      if (countInput) countInput.value = '1';
+      return;
+    }
+
+    if (badge) badge.textContent = `${list.length} selected`;
+    if (hiddenInput) hiddenInput.value = list.map((c) => c.name).join(', ');
+    if (countInput) countInput.value = String(Math.max(1, list.length));
+
+    container.innerHTML = '';
+    list.forEach((emp) => {
+      const chip = document.createElement('div');
+      chip.className = `inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
+        isBook ? 'bg-blue-100 text-blue-900 border border-blue-200' : 'bg-slate-200 text-slate-900 border border-slate-300'
+      } shadow-2xs transition`;
+
+      chip.innerHTML = `
+        <i data-lucide="user" class="w-3.5 h-3.5 ${isBook ? 'text-blue-700' : 'text-slate-700'} shrink-0"></i>
+        <span class="font-semibold">${escapeHtml(emp.name)}</span>
+        <span class="text-[10px] ${isBook ? 'bg-blue-200/70 text-blue-800' : 'bg-slate-300 text-slate-800'} px-1.5 py-0.5 rounded">${escapeHtml(emp.department || 'General')}</span>
+        <button type="button" class="ml-1 text-slate-400 hover:text-rose-600 rounded p-0.5 hover:bg-rose-50 transition cursor-pointer" title="Remove ${escapeHtml(emp.name)}">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+
+      const removeBtn = chip.querySelector('button');
+      removeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeAttendee(type, emp.id);
+      });
+
+      container.appendChild(chip);
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function addAttendee(type, empId) {
+    const list = type === 'book' ? bookSelectedAttendees : allotSelectedAttendees;
+    const emp = cachedColleagues.find((c) => String(c.id) === String(empId));
+    if (!emp) return;
+
+    if (!list.some((item) => item.id === emp.id)) {
+      list.push(emp);
+      renderSelectedAttendees(type);
+    }
+  }
+
+  function removeAttendee(type, empId) {
+    if (type === 'book') {
+      bookSelectedAttendees = bookSelectedAttendees.filter((c) => c.id !== empId);
+    } else {
+      allotSelectedAttendees = allotSelectedAttendees.filter((c) => c.id !== empId);
+    }
+    renderSelectedAttendees(type);
+  }
+
+  function selectAllAttendees(type) {
+    if (type === 'book') {
+      bookSelectedAttendees = [...cachedColleagues];
+    } else {
+      allotSelectedAttendees = [...cachedColleagues];
+    }
+    renderSelectedAttendees(type);
+  }
+
+  function clearAttendees(type) {
+    if (type === 'book') {
+      bookSelectedAttendees = [];
+    } else {
+      allotSelectedAttendees = [];
+    }
+    renderSelectedAttendees(type);
   }
 
   function getBookingFormValues() {
@@ -672,11 +846,14 @@
     const endInput = document.getElementById('book-end');
     if (endInput) endInput.value = '';
 
-    const partInput = document.getElementById('book-participants');
-    if (partInput) partInput.value = '';
-
-    const attInput = document.getElementById('book-attendees');
-    if (attInput) attInput.value = '1';
+    clearAttendees('book');
+    const bookFilter = document.getElementById('book-employee-filter');
+    if (bookFilter) {
+      bookFilter.value = '';
+      filterEmployeeDropdown('book-employee-select', '');
+    }
+    const bookSelect = document.getElementById('book-employee-select');
+    if (bookSelect) bookSelect.value = '';
 
     const purposeInput = document.getElementById('book-purpose');
     if (purposeInput) purposeInput.value = '';
@@ -1014,8 +1191,8 @@
       return;
     }
     if (!participants || !participants.trim()) {
-      errEl.textContent = 'Please add participant names before booking.';
-      document.getElementById('book-participants')?.focus();
+      errEl.textContent = 'Please select at least one employee from the registered employees dropdown.';
+      document.getElementById('book-employee-select')?.focus();
       return;
     }
     if (!purpose || !purpose.trim()) {
@@ -1289,12 +1466,53 @@
       btnAllotSubmit.addEventListener('click', handleAdminAllotSubmit);
     }
 
-    const allotParticipantsInput = document.getElementById('allot-participants');
-    if (allotParticipantsInput) {
-      allotParticipantsInput.addEventListener('input', () => {
-        const names = allotParticipantsInput.value.split(',').map((s) => s.trim()).filter(Boolean);
-        if (names.length > 0) {
-          document.getElementById('allot-attendees').value = names.length;
+    // Admin Allot Attendee Dropdown Selection from Database
+    const allotSelect = document.getElementById('allot-colleague-select');
+    if (allotSelect) {
+      allotSelect.addEventListener('change', () => {
+        if (allotSelect.value) {
+          addAttendee('allot', allotSelect.value);
+          allotSelect.value = '';
+        }
+      });
+    }
+
+    const allotFilter = document.getElementById('allot-employee-filter');
+    if (allotFilter) {
+      allotFilter.addEventListener('input', () => {
+        filterEmployeeDropdown('allot-colleague-select', allotFilter.value);
+      });
+      allotFilter.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const select = document.getElementById('allot-colleague-select');
+          if (select) {
+            const firstVisible = Array.from(select.options).slice(1).find((opt) => !opt.hidden);
+            if (firstVisible && firstVisible.value) {
+              addAttendee('allot', firstVisible.value);
+              allotFilter.value = '';
+              filterEmployeeDropdown('allot-colleague-select', '');
+            }
+          }
+        }
+      });
+    }
+
+    const allotSelectAllBtn = document.getElementById('allot-select-all-btn');
+    if (allotSelectAllBtn) {
+      allotSelectAllBtn.addEventListener('click', () => selectAllAttendees('allot'));
+    }
+
+    const allotClearBtn = document.getElementById('allot-clear-attendees-btn');
+    if (allotClearBtn) {
+      allotClearBtn.addEventListener('click', () => clearAttendees('allot'));
+    }
+
+    const allotUserSelect = document.getElementById('allot-user');
+    if (allotUserSelect) {
+      allotUserSelect.addEventListener('change', () => {
+        if (allotUserSelect.value) {
+          addAttendee('allot', allotUserSelect.value);
         }
       });
     }
@@ -1597,8 +1815,8 @@
       return;
     }
     if (!participants || !participants.trim()) {
-      errEl.textContent = 'Please add participant names before allotting.';
-      document.getElementById('allot-participants')?.focus();
+      errEl.textContent = 'Please select at least one employee from the registered employees dropdown.';
+      document.getElementById('allot-colleague-select')?.focus();
       return;
     }
     if (!purpose || !purpose.trim()) {
@@ -1634,10 +1852,14 @@
       document.getElementById('allot-start').value = '';
       document.getElementById('allot-end').value = '';
       document.getElementById('allot-purpose').value = '';
-      const allotPart = document.getElementById('allot-participants');
-      if (allotPart) allotPart.value = '';
-      const allotAtt = document.getElementById('allot-attendees');
-      if (allotAtt) allotAtt.value = '1';
+      clearAttendees('allot');
+      const allotFilter = document.getElementById('allot-employee-filter');
+      if (allotFilter) {
+        allotFilter.value = '';
+        filterEmployeeDropdown('allot-colleague-select', '');
+      }
+      const allotSelect = document.getElementById('allot-colleague-select');
+      if (allotSelect) allotSelect.value = '';
       const allotErr = document.getElementById('allot-error');
       if (allotErr) allotErr.textContent = '';
       

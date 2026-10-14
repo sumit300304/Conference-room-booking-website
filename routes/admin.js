@@ -6,7 +6,7 @@ const { getIndiaNow, isValidDateString, isValidTimeString } = require('../utils/
 const { formatBookingCode } = require('../utils/bookingId');
 const { sendBookingConfirmationEmail, sendEmployeeWelcomeEmail } = require('../config/mailer');
 const { checkEndedMeetings } = require('../utils/meetingWatcher');
-const { resolveAttendeeEmails } = require('../utils/attendees');
+const { resolveAttendeeEmails, validateAttendees } = require('../utils/attendees');
 
 const router = express.Router();
 
@@ -174,8 +174,20 @@ router.post('/bookings', (req, res) => {
       return res.status(400).json({ error: 'End time must be after start time.' });
     }
     if (!participants || !participants.trim()) {
-      return res.status(400).json({ error: 'Please provide participant names.' });
+      return res.status(400).json({ error: 'Please select meeting attendees from the registered employees dropdown.' });
     }
+
+    // Strict validation: Every attendee must be an active registered employee in the database
+    const attendeeValidation = validateAttendees(participants);
+    if (!attendeeValidation.valid) {
+      return res.status(400).json({ error: attendeeValidation.error });
+    }
+
+    const canonicalParticipants = attendeeValidation.users.map((u) => u.full_name).join(', ');
+    if (isNaN(attendees) || attendees < 1) {
+      attendees = Math.max(1, attendeeValidation.users.length);
+    }
+
     if (!purpose || !purpose.trim()) {
       return res.status(400).json({ error: 'Please provide meeting purpose / reason.' });
     }
@@ -216,7 +228,7 @@ router.post('/bookings', (req, res) => {
       const info = db.prepare(`
         INSERT INTO bookings (booking_code, user_id, hall_id, booking_date, start_time, end_time, purpose, attendees, participants, status, created_at)
         VALUES ('PENDING', @userId, @hallId, @date, @startTime, @endTime, @purpose, @attendees, @participants, 'BOOKED', @now)
-      `).run({ userId: targetUser.id, hallId, date: bookingDate, startTime, endTime, purpose, attendees, participants, now });
+      `).run({ userId: targetUser.id, hallId, date: bookingDate, startTime, endTime, purpose, attendees, participants: canonicalParticipants, now });
 
       const code = formatBookingCode(info.lastInsertRowid);
       db.prepare('UPDATE bookings SET booking_code = ? WHERE id = ?').run(code, info.lastInsertRowid);
@@ -226,8 +238,16 @@ router.post('/bookings', (req, res) => {
 
     const result = allotBooking();
 
-    // Resolve attendee emails from participants input (excluding assigned user)
-    const resolvedAttendees = resolveAttendeeEmails(participants, targetUser.email);
+    // Resolve attendee emails from validated registered users (excluding assigned user to prevent duplicate email)
+    const targetEmailLower = (targetUser.email || '').toLowerCase().trim();
+    const resolvedAttendees = attendeeValidation.users
+      .filter((u) => u.email.toLowerCase().trim() !== targetEmailLower)
+      .map((u) => ({
+        id: u.id,
+        name: u.full_name,
+        email: u.email,
+        department: u.department || '',
+      }));
 
     // Dispatch email notification to the assigned user and all attendees
     sendBookingConfirmationEmail({
@@ -240,7 +260,7 @@ router.post('/bookings', (req, res) => {
       endTime,
       purpose,
       attendees,
-      participants,
+      participants: canonicalParticipants,
       attendeeList: resolvedAttendees,
     }).catch((e) => console.error('Error sending allotment confirmation email:', e.message));
 

@@ -22,10 +22,116 @@ const db = require('../config/db');
  * @param {string} bookerEmail - Email of the organizer booking the hall (excluded)
  * @returns {Array<{ name: string, email: string }>}
  */
+function findRegisteredUser(entry) {
+  if (!entry || typeof entry !== 'string') return null;
+  const raw = entry.trim();
+  if (!raw) return null;
+
+  // 1. If numeric ID was passed
+  if (/^\d+$/.test(raw)) {
+    const userById = db.prepare('SELECT id, full_name, email, department FROM users WHERE id = ? AND active = 1').get(Number(raw));
+    if (userById) return userById;
+  }
+
+  // 2. Email embedded (e.g. "priya.sharma@algorisys.com" or "Priya (priya@algorisys.com)")
+  const emailMatch = raw.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  if (emailMatch) {
+    const emailLower = emailMatch[1].toLowerCase().trim();
+    const userByEmail = db.prepare('SELECT id, full_name, email, department FROM users WHERE active = 1 AND LOWER(email) = ?').get(emailLower);
+    if (userByEmail) return userByEmail;
+  }
+
+  // 3. Clean string without brackets/quotes
+  const cleanName = raw.replace(/[<>()"']/g, '').trim();
+  if (!cleanName) return null;
+
+  // Exact full_name match (case-insensitive)
+  const userByName = db.prepare('SELECT id, full_name, email, department FROM users WHERE active = 1 AND LOWER(TRIM(full_name)) = LOWER(TRIM(?)) LIMIT 1').get(cleanName);
+  if (userByName) return userByName;
+
+  // Prefix match on email (e.g. "priya.sharma")
+  const formattedPrefix = cleanName.toLowerCase().replace(/\s+/g, '.');
+  const userByPrefix = db.prepare(`
+    SELECT id, full_name, email, department FROM users
+    WHERE active = 1 AND (
+      LOWER(email) = LOWER(?) OR
+      LOWER(email) LIKE LOWER(?)
+    )
+    LIMIT 1
+  `).get(`${formattedPrefix}@algorisys.com`, `${formattedPrefix}@%`);
+  if (userByPrefix) return userByPrefix;
+
+  // Partial match on full_name if at least 3 characters
+  if (cleanName.length >= 3) {
+    const userBySub = db.prepare(`
+      SELECT id, full_name, email, department FROM users
+      WHERE active = 1 AND (
+        LOWER(full_name) LIKE LOWER(?) OR
+        LOWER(?) LIKE ('%' || LOWER(full_name) || '%')
+      )
+      ORDER BY LENGTH(full_name) ASC
+      LIMIT 1
+    `).get(`%${cleanName}%`, cleanName);
+    if (userBySub) return userBySub;
+  }
+
+  return null;
+}
+
+/**
+ * Validates that all participants in a comma/semicolon/newline-delimited string
+ * exist as active registered employees in the database.
+ * Rejects any random or unregistered names.
+ * 
+ * @param {string} participantsString
+ * @returns {{ valid: boolean, error?: string, users?: Array<{ id: number, full_name: string, email: string, department: string }> }}
+ */
+function validateAttendees(participantsString) {
+  if (!participantsString || typeof participantsString !== 'string' || !participantsString.trim()) {
+    return { valid: false, error: 'Please select at least one employee from the registered employees dropdown.' };
+  }
+
+  const rawEntries = participantsString
+    .split(/[,;\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (rawEntries.length === 0) {
+    return { valid: false, error: 'Please select at least one employee from the registered employees dropdown.' };
+  }
+
+  const validUsers = [];
+  const seenUserIds = new Set();
+
+  for (const raw of rawEntries) {
+    const matched = findRegisteredUser(raw);
+    if (!matched) {
+      return {
+        valid: false,
+        error: `"${raw}" is not a registered employee in the database. Only active employees can be selected.`,
+      };
+    }
+    if (!seenUserIds.has(matched.id)) {
+      seenUserIds.add(matched.id);
+      validUsers.push(matched);
+    }
+  }
+
+  return { valid: true, users: validUsers };
+}
+
+/**
+ * Resolves participant entries to active registered employee records with their verified emails.
+ * Only returns verified employees from the database.
+ * Excludes bookerEmail to avoid sending duplicate emails.
+ * 
+ * @param {string} participantsString - e.g. "Priya Sharma, rahul.verma@algorisys.com"
+ * @param {string} bookerEmail - Email of the organizer booking the hall (excluded)
+ * @returns {Array<{ id: number, name: string, email: string, department: string }>}
+ */
 function resolveAttendeeEmails(participantsString, bookerEmail = '') {
   if (!participantsString || typeof participantsString !== 'string') return [];
 
-  // Split on commas, semicolons, or newlines
   const rawEntries = participantsString
     .split(/[,;\n]+/)
     .map((s) => s.trim())
@@ -39,107 +145,26 @@ function resolveAttendeeEmails(participantsString, bookerEmail = '') {
   }
 
   for (const raw of rawEntries) {
-    const entry = raw.trim();
-    if (!entry) continue;
+    const matched = findRegisteredUser(raw);
+    if (!matched) continue; // Ignore any unregistered names
 
-    // 1. Check if there is an email address embedded anywhere in entry
-    // Handles formats like:
-    // - "priya.sharma@algorisys.com"
-    // - "Priya Sharma <priya.sharma@algorisys.com>"
-    // - "Priya Sharma (priya.sharma@algorisys.com)"
-    const emailMatch = entry.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
-
-    if (emailMatch) {
-      const emailLower = emailMatch[1].toLowerCase().trim();
-      if (!seenEmails.has(emailLower)) {
-        seenEmails.add(emailLower);
-
-        // Check if this email belongs to an active registered employee
-        const userRow = db.prepare('SELECT full_name, email FROM users WHERE LOWER(email) = ?').get(emailLower);
-
-        let displayName = userRow ? userRow.full_name : '';
-        if (!displayName) {
-          const cleanedName = entry.replace(emailMatch[0], '').replace(/[<>()"']/g, '').trim();
-          displayName = cleanedName || emailLower.split('@')[0];
-        }
-
-        resolved.push({
-          email: userRow ? userRow.email : emailLower,
-          name: displayName,
-        });
-      }
-      continue;
-    }
-
-    // 2. Entry has NO email address, only a name or username
-    // E.g. "Priya Sharma", "Rahul", "priya.sharma"
-    const cleanName = entry.replace(/[<>()"']/g, '').trim();
-    if (!cleanName) continue;
-
-    // Search active registered users in the database:
-    // A) Exact full_name match (case-insensitive)
-    let userMatch = db.prepare(`
-      SELECT full_name, email FROM users
-      WHERE active = 1 AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))
-      LIMIT 1
-    `).get(cleanName);
-
-    // B) If not found, match by email username prefix (e.g. "priya.sharma" or "priya sharma" -> "priya.sharma@...")
-    if (!userMatch) {
-      const formattedPrefix = cleanName.toLowerCase().replace(/\s+/g, '.');
-      userMatch = db.prepare(`
-        SELECT full_name, email FROM users
-        WHERE active = 1 AND (
-          LOWER(email) = LOWER(?) OR
-          LOWER(email) LIKE LOWER(?)
-        )
-        LIMIT 1
-      `).get(
-        `${formattedPrefix}@algorisys.com`,
-        `${formattedPrefix}@%`
-      );
-    }
-
-    // C) If not found, partial match on full_name (e.g. first name or substring)
-    if (!userMatch && cleanName.length >= 3) {
-      userMatch = db.prepare(`
-        SELECT full_name, email FROM users
-        WHERE active = 1 AND (
-          LOWER(full_name) LIKE LOWER(?) OR
-          LOWER(?) LIKE ('%' || LOWER(full_name) || '%')
-        )
-        ORDER BY LENGTH(full_name) ASC
-        LIMIT 1
-      `).get(`%${cleanName}%`, cleanName);
-    }
-
-    if (userMatch && userMatch.email) {
-      const emailLower = userMatch.email.toLowerCase().trim();
-      if (!seenEmails.has(emailLower)) {
-        seenEmails.add(emailLower);
-        resolved.push({
-          email: userMatch.email,
-          name: userMatch.full_name,
-        });
-      }
-    } else {
-      // D) Fallback: if colleague is not yet in the system, construct standard company email
-      const nameParts = cleanName.split(/\s+/).filter(Boolean);
-      const fallbackEmail = nameParts.length >= 2 
-        ? `${nameParts.join('.').toLowerCase()}@algorisys.com`
-        : `${cleanName.toLowerCase()}@algorisys.com`;
-
-      if (!seenEmails.has(fallbackEmail)) {
-        seenEmails.add(fallbackEmail);
-        resolved.push({
-          email: fallbackEmail,
-          name: cleanName,
-        });
-      }
+    const emailNorm = matched.email.toLowerCase().trim();
+    if (!seenEmails.has(emailNorm)) {
+      seenEmails.add(emailNorm);
+      resolved.push({
+        id: matched.id,
+        name: matched.full_name,
+        email: matched.email,
+        department: matched.department || '',
+      });
     }
   }
 
   return resolved;
 }
 
-module.exports = { resolveAttendeeEmails };
+module.exports = {
+  findRegisteredUser,
+  validateAttendees,
+  resolveAttendeeEmails,
+};

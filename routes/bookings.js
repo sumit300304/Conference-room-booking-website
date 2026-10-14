@@ -5,7 +5,7 @@ const { getIndiaNow, isValidTimeString, isValidDateString } = require('../utils/
 const { formatBookingCode } = require('../utils/bookingId');
 const { sendBookingConfirmationEmail, sendMeetingEndedEmail } = require('../config/mailer');
 const { checkEndedMeetings } = require('../utils/meetingWatcher');
-const { resolveAttendeeEmails } = require('../utils/attendees');
+const { resolveAttendeeEmails, validateAttendees } = require('../utils/attendees');
 
 const router = express.Router();
 
@@ -308,8 +308,20 @@ router.post('/bookings', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'End time must be after start time.' });
     }
     if (!participants || !participants.trim()) {
-      return res.status(400).json({ error: 'Please provide participant names.' });
+      return res.status(400).json({ error: 'Please select meeting attendees from the registered employees dropdown.' });
     }
+
+    // Strict validation: Every attendee must be an active registered employee in the database
+    const attendeeValidation = validateAttendees(participants);
+    if (!attendeeValidation.valid) {
+      return res.status(400).json({ error: attendeeValidation.error });
+    }
+
+    const canonicalParticipants = attendeeValidation.users.map((u) => u.full_name).join(', ');
+    if (isNaN(attendees) || attendees < 1) {
+      attendees = Math.max(1, attendeeValidation.users.length);
+    }
+
     if (!purpose || !purpose.trim()) {
       return res.status(400).json({ error: 'Please provide meeting purpose / agenda.' });
     }
@@ -367,7 +379,7 @@ router.post('/bookings', requireAuth, async (req, res) => {
       const info = db.prepare(`
         INSERT INTO bookings (booking_code, user_id, hall_id, booking_date, start_time, end_time, purpose, attendees, participants, status, created_at)
         VALUES ('PENDING', @userId, @hallId, @date, @startTime, @endTime, @purpose, @attendees, @participants, 'BOOKED', @now)
-      `).run({ userId: req.user.id, hallId, date: bookingDate, startTime, endTime, purpose, attendees, participants, now });
+      `).run({ userId: req.user.id, hallId, date: bookingDate, startTime, endTime, purpose, attendees, participants: canonicalParticipants, now });
 
       const code = formatBookingCode(info.lastInsertRowid);
       db.prepare('UPDATE bookings SET booking_code = ? WHERE id = ?').run(code, info.lastInsertRowid);
@@ -377,8 +389,16 @@ router.post('/bookings', requireAuth, async (req, res) => {
 
     const result = createBooking();
 
-    // Resolve attendee emails from participants input (excluding booker)
-    const resolvedAttendees = resolveAttendeeEmails(participants, req.user.email);
+    // Resolve attendee emails from validated registered users (excluding booker to prevent duplicate email)
+    const bookerEmailLower = (req.user.email || '').toLowerCase().trim();
+    const resolvedAttendees = attendeeValidation.users
+      .filter((u) => u.email.toLowerCase().trim() !== bookerEmailLower)
+      .map((u) => ({
+        id: u.id,
+        name: u.full_name,
+        email: u.email,
+        department: u.department || '',
+      }));
 
     // Send confirmation email notification to the booking employee and all attendees
     sendBookingConfirmationEmail({
@@ -391,7 +411,7 @@ router.post('/bookings', requireAuth, async (req, res) => {
       endTime,
       purpose,
       attendees,
-      participants,
+      participants: canonicalParticipants,
       attendeeList: resolvedAttendees,
     }).catch((err) => console.error('Error dispatching confirmation email:', err.message));
 
